@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.PermissionMapper">
+     
+     <resultMap type="permissionInfo" id="permissionMap">
+         <id column="id" property="id" />
+         <result column="auth_id"  property="authId"/>
+         <result column="parent_auth_id"  property="pAuthId"/>
+         <result column="auth_name"  property="authName"/>
+         <result column="auth_description"  property="description"/>
+         <result column="is_checked"  property="isCheck"/>
+     </resultMap>
+     
+     
+     <select id="queryUserPermissionByUserName" parameterType="String" resultType="permissionInfo">
+         SELECT
+            auth.id as id,
+	        auth.auth_id AS authId,
+	        auth.parent_auth_id pAuthId,
+	        auth.auth_name AS authName,
+	        auth.auth_description AS description, 
+	        auth.is_checked AS isCheck
+         from 
+	         auth_info auth,
+	         role_auth_relation rar,
+	         user_role_info usi,
+	         user_info ui
+         where auth.auth_id = rar.auth_id
+         AND usi.role_id = rar.role_id
+         AND ui.user_id = usi.user_id
+         AND ui.user_name = #{userName}
+     </select>
+     
+     <!-- 根据用户id获取用户的权限信息 -->
+     <select id="queryUserPermissionByuserId" parameterType="int" resultMap="permissionMap">
+         SELECT
+            distinct(auth.id),
+	        auth.auth_id,
+	        auth.parent_auth_id,
+	        auth.auth_name,
+	        auth.auth_description, 
+	        auth.is_checked
+         from 
+	         auth_info auth,
+	         role_auth_relation rar,
+	         user_role_info usi
+         where auth.auth_id = rar.auth_id
+         AND usi.role_id = rar.role_id
+         AND usi.user_id = #{userId} 
+     </select>
+     
+     <!-- 获取系统默认权限 -->
+     <select id="queryDefaultPermission" resultType="PermissionInfo">
+         SELECT 
+          auth.auth_id AS authId,
+          auth.parent_auth_id AS pAuthId,
+          auth.auth_name AS authName,
+          auth.auth_description AS description, 
+          auth.is_checked AS isCheck
+          FROM auth_info auth
+     </select>
+     
+     <select id="queryPermissionByRoleId" resultType="permissionInfo" parameterType="int">
+        SELECT 
+		  auth_id AS authId,
+		  parent_auth_id AS pAuthId,
+		  auth_name AS authName,
+		  auth_description AS description,
+		  case when temp.roleId = #{roleId} THEN 1 ELSE 0 END AS isCheck
+		  FROM auth_info
+			  LEFT JOIN (SELECT 
+			  auth.auth_id AS authId,
+			  rar.role_id AS roleId
+			  FROM auth_info auth
+			  left join role_auth_relation rar
+			  on auth.auth_id = rar.auth_id
+			  where rar.role_id = #{roleId}
+			  ) AS temp
+			on temp.authId = auth_info.auth_id
+     </select>
+</mapper>

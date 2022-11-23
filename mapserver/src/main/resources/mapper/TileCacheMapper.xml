@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.TileCacheMapper">
+    
+    
+    <select id="queryTaskInstance" parameterType="String" resultType="seedTaskInstance">
+		SELECT 
+	        task_id as taskId,
+	        layer_name as layerName,
+	        task_name as taskName,
+	        store_type as storeType,
+	        store_path as storePath,
+	        srs_style as srs,
+	        tile_style as tileFormat,
+	        seed_type as seedType,
+	        start_seed_time as startTime,
+	        max_task_num as maxTaskNum,
+	        thread_num as threadNum,
+	        zoom_start as zoomStart,
+	        zoom_end as zoomEnd,
+	        min_lon as minX,
+	        min_lat as minY,
+	        max_lon as maxX,
+	        max_lat as maxY,
+	        tile_width as tileWidth,
+	        tile_height as tileHeight
+	    from tile_task_info
+	    where task_name = #{taskName}     	
+    </select>
+    
+    <select id="queryGlobalSeedParam" resultType="org.pygisserver.common.entity.SeedTaskParam">
+        select 
+	       store_type as storeType,
+	       seed_type as type,
+	       store_path as storePath,
+	       default_srs as gridSetName,
+	       raster_format as rasterFormat,
+	       dem_format as demFormat,
+		   vector_format as vectorFormat,
+		   tile_width_size as tileWidth,
+		   tile_height_size as tileHeight,
+		   tile_max_level as defaultMaxZoomLevel,
+		   max_task_num as maxTaskNum,
+		   default_thread_num as threadCount,
+		   export_path as exportPath
+	    from auto_tile_config
+    </select>
+    
+    <insert id="saveSeedTileConfig" parameterType="org.pygisserver.common.entity.SeedTaskParam">
+        insert into auto_tile_config(
+        store_id,store_type,seed_type,store_path,default_srs,raster_format,dem_format,
+	    vector_format,tile_width_size,tile_height_size,tile_max_level,max_task_num,default_thread_num)
+        values(1,#{storeType},#{type},#{storePath},#{gridSetName},#{rasterFormat},#{demFormat},
+        #{vectorFormat},#{tileWidth},#{tileHeight},#{defaultMaxZoomLevel},#{maxTaskNum},#{threadCount}) on conflict(store_id)
+        do update
+        set store_type=#{storeType},
+        seed_type=#{type},
+        store_path= #{storePath},
+        default_srs=#{gridSetName},
+        raster_format=#{rasterFormat},
+        dem_format=#{demFormat},
+	    vector_format=#{vectorFormat},
+	    tile_width_size=#{tileWidth},
+	    tile_height_size=#{tileHeight},
+	    tile_max_level=#{defaultMaxZoomLevel},
+	    max_task_num=#{maxTaskNum},
+	    default_thread_num=#{threadCount}
+    </insert>
+    
+    <update id="updateExportPath" parameterType="String">
+        update auto_tile_config set export_path = #{exportPath} where store_id = 1
+    </update>
+    
+</mapper>

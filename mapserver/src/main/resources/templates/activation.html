@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./static/css/activation.css">
+    <link rel="stylesheet" href=".//static/css/pop.css">
+    <script src="./static/lib/jquery-1.11.0.min.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./static/js/activation.js" type="text/javascript" charset="utf-8"></script>
+    <script src="./static/js/message.js" type="text/javascript" charset="utf-8"></script>
+    <title>激活页面</title>
+</head>
+
+<body>
+    <div class="activation">
+        <div class="activation_icon">
+            <img src="./static/img/activation/LOGO.png" alt="">
+        </div>
+        <div class="activation_main">
+            <div class="primaryMain">
+                <div class="words">
+                    <h3>尊敬的用户：</h3>
+                    <p class="word"> 您的普祐地理信息云服务已到期，如需继续使用，您可通过以下方式联系“普祐科技产品服务人员”免费获取激活码或购买使用，普祐科技竭诚为您提供优质的产品服务。
+                    </p>
+                    <button id="active" onclick="showBox()">免费激活</button>
+                </div>
+                <div class="card">
+                    <div class="cardLeft">
+                        <img src="./static/img/activation/label.png" alt="">
+                        <span>商务合作</span>
+                        <div class="details">
+                            <div class="business">
+                            </div>
+                            <div class="details_right">
+                                <div class="name">
+                                    <img src="./static/img/activation/name.png" alt="" class="photo">
+                                    <div>姓名：廖和廷</div>
+                                </div>
+                                <div class="phone">
+                                    <img src="./static/img/activation/phone.png" alt="" class="photo">
+                                    <div>电话：18280335829</div>
+                                </div>
+                                <div class="Email">
+                                    <img src="./static/img/activation/email.png" alt="" class="photo">
+                                    <div>邮箱：liaoheting@puyougis.com</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="consult">（售前咨询、售后服务、技术支持、问题反馈）</p>
+                    </div>
+                    <div class="cardRight">
+                        <img src="./static/img/activation/label.png" alt="">
+                        <span>产品服务</span>
+                        <div class="details">
+                            <div class="productService">
+                            </div>
+                            <div class="details_right">
+                                <div class="name">
+                                    <img src="./static/img/activation/name.png" alt="" class="photo">
+                                    <div>姓名：王凯</div>
+                                </div>
+                                <div class="phone">
+                                    <img src="./static/img/activation/phone.png" alt="" class="photo">
+                                    <div>电话：18551664926</div>
+                                </div>
+                                <div class="Email">
+                                    <img src="./static/img/activation/email.png" alt="" class="photo">
+                                    <div>邮箱：wangkai@puyougis.com</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="sale">（产品采购、项目合作、功能定制）</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div id="mask" onclick="closePop()" style="display: none;"></div>
+    <div id="popContainer" style="display: none;">
+        <div class="pop">
+            <div class="popTitle">
+                <div class="title">普祐云服务</div>
+                <div class="close">
+                    <img src="./static/img/activation/close.png" alt="" onclick="closePop()">
+                </div>
+            </div>
+            <div class="popMain">
+                <div class="code">
+                    <span class="MacTitle">Mac地址</span>
+                    <input type="text" placeholder="请将MAC地址发送给我们" id="macAddress">
+                </div>
+                <div class="code">
+                    <span class="codeTitle">主板信息</span>
+                    <input type="text" placeholder="请输入主板信息" id="mainBoardSerial">
+                </div>
+                <div class="code">
+                    <span class="ipTitle">IP地址</span>
+                    <input type="text" placeholder="请输入ip地址" id="ipAddress">
+                </div>
+                <div class="code">
+                    <span class="cpuTitle">CPU</span>
+                    <input type="text" placeholder="请输入cpu" id="cpuSerial">
+                </div>
+            </div>
+            <div class="button">
+                <button class="copy">复制</button>
+                <!-- <input type="text" id="count"> -->
+                <button class="active">激活</button>
+            </div>
+        </div>
+    </div>
+<script type="text/javascript" src="/pygisserver/static/js/vendor.126cb6de1a042a06ad61.js"></script></body>
+
+</html>

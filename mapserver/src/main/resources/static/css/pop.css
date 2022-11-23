@@ -1,0 +1,116 @@
+ * {
+     margin: 0;
+     padding: 0;
+ }
+
+ #mask {
+     width: 100%;
+     height: 100%;
+     background-color: rgba(0, 0, 0, 0.5) !important;
+     filter: alpha(opacity=40) !important;
+     position: fixed !important;
+     top: 0;
+ }
+
+ #popContainer {
+     width: 100%;
+     height: 935px;
+     box-sizing: border-box;
+     position: absolute;
+     top: 0;
+ }
+
+ .pop {
+     width: 470px;
+     height: 355px;
+     background-color: #ffffff;
+     box-shadow: 0px 20px 50px 0px rgba(0, 0, 0, 0.5);
+     position: relative;
+     left: 50%;
+     top: 50%;
+     transform: translate(-235px, -177px);
+     overflow: hidden;
+ }
+
+ .popMain {
+     text-align: right;
+ }
+
+ .pop span {
+     font-family: 'MicrosoftYaHei';
+     font-size: 14px;
+     font-weight: normal;
+     font-stretch: normal;
+     letter-spacing: 0px;
+     color: #333333;
+ }
+
+ .title {
+     font-size: 12px;
+     font-weight: bold;
+     color: #333333;
+     border-bottom: 1px solid #1579d7;
+     padding: 13px 0;
+     margin: 20px 25px;
+ }
+
+ .close {
+     position: absolute;
+     top: 2rem;
+     right: 1.6rem;
+ }
+
+ .code {
+     font-size: 12px;
+     color: #999;
+     margin: 20px 25px;
+     padding-right: 12px;
+ }
+
+ input {
+     width: 310px;
+     height: 28px;
+     border-radius: 14px;
+     border: solid 1px #dddddd !important;
+     outline: none;
+     border: 0;
+     margin-left: 1rem;
+     text-indent: 1em;
+ }
+
+ input::placeholder {
+     font-family: 'MicrosoftYaHei';
+     font-size: 12px;
+     font-weight: normal;
+     font-stretch: normal;
+     letter-spacing: 0px;
+     color: #dddddd;
+ }
+
+ .button>button {
+     width: 235px;
+     height: 38px;
+     border: 0;
+     outline: none;
+     color: #fff;
+     cursor: pointer;
+     position: absolute;
+ }
+
+ .copy {
+     bottom: 0;
+     left: 0;
+     background-color: #1579d7;
+ }
+
+ .active {
+     bottom: 0;
+     right: -1px;
+     background-color: #999;
+ }
+
+ #count {
+     position: absolute;
+     border: none !important;
+     opacity: 0 !important;
+ }

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    scan: 当此属性设置为true时，配置文件如果发生改变，将会被重新加载，默认值为true.
+    scanPeriod: 设置监测配置文件是否有修改的时间间隔，如果没有给出时间单位，默认单位是毫秒.当scan为true时，此属性生效。默认的时间间隔为1分钟.
+    debug: 当此属性设置为true时，将打印出logback内部日志信息，实时查看logback运行状态。默认值为false。
+-->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+
+    <!-- 在Eclipse中运行，请到Eclipse的安装目录中找log文件，Tomcat下，请到Tomcat目录下找 -->
+    <property name="LOG_PATH" value="logs"/>
+    <!-- 项目名称 -->
+    <property name="PROJECT_NAME" value="render"/>
+
+
+    <!-- 控制台打印日志的配置 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+       <filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>INFO</level>
+		</filter>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %level ${PROJECT_NAME} [%thread] [%logger{50}:%line] %msg%n</pattern>
+            <!--  <charset>utf-8</charset> -->
+        </encoder>
+    </appender>
+
+
+    <!-- 配置DEBUG, INFO, WARN, ERROR 日志的Appender -->
+    <appender name="FILE-ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 正在记录的日志文件的路径及文件名 -->
+        <file>${LOG_PATH}/${PROJECT_NAME}/error.log</file>
+        <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- 日志输出格式 -->
+            <fileNamePattern>${LOG_PATH}/${PROJECT_NAME}/error-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <!-- 除按日志记录之外，还配置了日志文件不能超过10M，若超过10M，日志文件会以索引0开始 -->
+            <maxFileSize>10MB</maxFileSize>
+            <!-- 日志文件保留天数 -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <!-- 追加方式记录日志 -->
+        <append>true</append>
+        <!-- 日志打印的格式 -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %level ${PROJECT_NAME} [%thread] [%logger{50}:%line] %msg%n</pattern>
+            <!--  <charset>utf-8</charset> -->
+        </encoder>
+        <!-- 此日志文件只记录error级别的 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="FILE-WARN" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 正在记录的日志文件的路径及文件名 -->
+        <file>${LOG_PATH}/${PROJECT_NAME}/warn.log</file>
+        <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            
+            <fileNamePattern>${LOG_PATH}/${PROJECT_NAME}/warn-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <!-- 除按日志记录之外，还配置了日志文件不能超过10M，若超过10M，日志文件会以索引0开始 -->
+            <maxFileSize>10MB</maxFileSize>
+            <!-- 日志文件保留天数 -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <!-- 追加方式记录日志 -->
+        <append>true</append>
+        <!-- 日志打印的格式 -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %level ${PROJECT_NAME} [%thread] [%logger{50}:%line] %msg%n</pattern>
+            <!--  <charset>utf-8</charset> -->
+        </encoder>
+        <!-- 此日志文件只记录warn级别，不记录大于warn级别的日志 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="FILE-INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 正在记录的日志文件的路径及文件名 -->
+        <file>${LOG_PATH}/${PROJECT_NAME}/info.log</file>
+        <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- %d{yyyy-MM-dd}指定日期格式，%i指定索引 -->
+            <fileNamePattern>${LOG_PATH}/${PROJECT_NAME}/info-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <!-- 除按日志记录之外，还配置了日志文件不能超过10M，若超过10M，日志文件会以索引0开始 -->
+            <maxFileSize>10MB</maxFileSize>
+            <!-- 日志文件保留天数 -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <!-- 追加方式记录日志 -->
+        <append>true</append>
+        <!-- 日志打印的格式 -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %level ${PROJECT_NAME} [%thread] [%logger{50}:%line] %msg%n</pattern>
+            <!--  <charset>utf-8</charset> -->
+        </encoder>
+        <!-- 此日志文件只记录info级别，不记录大于info级别的日志 -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <logger name="org.springframework" level="WARN" />
+    <logger name="org.hibernate" level="WARN" />
+
+    <root level="info">
+        <appender-ref ref="FILE-ERROR" />
+        <appender-ref ref="FILE-WARN" />
+        <appender-ref ref="FILE-INFO" />
+        <!-- 生产环境请将STDOUT去掉!!!
+        <appender-ref ref="STDOUT" />-->
+    </root>
+
+</configuration>

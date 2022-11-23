@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://www.springframework.org/schema/aop 
+        http://www.springframework.org/schema/aop/spring-aop.xsd">
+        
+        <bean id="mapServerInterceptor" class="org.pygisserver.web.interceptor.MapServerInterceptor"></bean>
+        
+        <bean id="geoserverUrlMapping"
+	    	class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
+	    	<property name="interceptors">
+	    	    <list>
+	    	       <ref bean="mapServerInterceptor"/>
+	    	    </list>
+	    	</property>
+	    	<property name="mappings">
+				<props>
+					<prop key="/wms">dispatcher</prop>
+					<prop key="/pygis/wfs">dispatcher</prop>
+					<prop key="/wfs">dispatcher</prop>
+					<prop key="/wcs">dispatcher</prop>
+					<prop key="/ows">dispatcher</prop>
+				</props>
+			</property>
+     	</bean>
+     	
+<!--     	<bean id="qxsyDispatcher" class="org.pygisserver.web.application.MapServerDispatcherServlet"></bean>-->
+<!--     	-->
+<!--        <bean id="simpleUrlHandlerMapping"-->
+<!--	    	class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">-->
+<!--	    	<property name="mappings">-->
+<!--				<props>-->
+<!--					<prop key="/model/webqxsy/**">qxsyDispatcher</prop>-->
+<!--				</props>-->
+<!--			</property>-->
+<!--     	</bean>-->
+        
+        <!-- 加载原geoserver的applictionbean -->
+        <import resource="gs-main-bean.xml"/>
+        <import resource="gs-wcs-bean.xml"/>
+        <import resource="gs-wcs1.0-bean.xml"/>
+        <import resource="gs-wcs1.1-bean.xml"/>
+        <import resource="gs-wcs2.0-bean.xml"/>
+        <import resource="gs-wfs-bean.xml"/>
+        <import resource="gs-wms-bean.xml"/>
+        <import resource="gs-vectortiles.xml"/>
+        <import resource="gs-kml.xml"/>
+        <import resource="spring-shiro.xml"/>
+</beans>

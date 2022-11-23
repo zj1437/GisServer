@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.ModelServerMapper">
+
+    <resultMap type="modelEntity" id="modelEntityMap">
+        <id column="id" property="id" />
+        <result column="server_name" property="serverName" />
+        <result column="status" property="status" />
+        <result column="product_num" property="productNum" />
+        <result column="publish_time" property="publishTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="publishor" property="publishor" />
+        <result column="description" property="description" />
+        <result column="file_url" property="url" />
+        <result column="product_name" property="productName" />
+        <result column="server_type" property="serverType" />
+        <result column="lon_position" property="lon"/>
+        <result column="lat_position" property="lat"/>
+        <result column="hei_position" property="hei"/>
+        <result column="is_public" property="isPublic"/>
+        <collection property="products" ofType="modelProduct">
+            <id column="product_id" property="productId"/>
+            <result column="server_id" property="modelServerId"/>
+            <result column="product_name" property="productName"/>
+            <result column="file_type" property="fileType"/>
+            <result column="file_url" property="fileUrl"/>
+            <result column="is_directory" property="isDirectory"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryModelEntityById" parameterType="int" resultMap="modelEntityMap">
+          SELECT
+	        msi.id,
+	        msi.server_name,
+	        msi.status,
+			msi.product_num,
+			msi.publish_time,
+			msi.update_time,
+			msi.publishor,
+			msi.description,
+			msi.server_type,
+			msi.is_public,
+			msi.file_url,
+			msi.product_name,
+			msi.lon_position,
+			msi.lat_position,
+			msi.hei_position,
+			mpi.product_id,
+			mpi.server_id,
+			mpi.product_name,
+			mpi.file_type,
+			mpi.file_url,
+			mpi.is_directory
+			from model_server_info msi
+			left join model_product_info mpi
+			on msi.id = mpi.server_id
+			where msi.id = #{serverId}
+     </select>
+
+
+
+    <!-- 保存模型服务 -->
+    <insert id="saveModelEntity" parameterType="modelEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO model_server_info(id,server_name,status,product_num,publish_time,update_time,
+        publishor,file_url,product_name,description,server_type,lon_position,lat_position,hei_position,is_public,offset_height)
+        VALUES (DEFAULT,#{serverName},#{status},#{productNum},#{publishTime},#{updateTime},
+        #{publishor}
+        <choose>
+            <when test="destPath != null and destPath != ''">
+                ,#{destPath}
+            </when>
+            <otherwise>
+                ,#{url}
+            </otherwise>
+        </choose>
+        ,#{productName},#{description},#{serverType},#{lon},#{lat},#{hei},#{isPublic},#{offsetHeight})
+    </insert>
+
+    <select id="queryModelServerName" resultType="String">
+        SELECT server_name from model_server_info
+    </select>
+
+    <insert id="saveModelProducts" parameterType="List">
+        INSERT INTO model_product_info
+        (product_id,server_id,product_name,file_type,file_url,is_directory)
+        VALUES
+        <foreach collection="list" item="product" index="id" separator=",">
+            (DEFAULT,#{product.modelServerId},#{product.productName},#{product.fileType},#{product.fileUrl},
+            #{product.isDirectory})
+        </foreach>
+    </insert>
+
+
+    <select id="queryModelEntityByIds" parameterType="List" resultType="modelEntity">
+        SELECT
+        msi.id AS id,
+        msi.server_name AS serverName,
+        msi.publishor AS publishor,
+        msi.file_url AS url,
+        msi.server_type AS serverType
+        from model_server_info msi
+        where id in
+        <foreach collection="list"  index="index" item="id"  separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="queryModelCount" resultType="int">
+        SELECT count(id) from model_server_info msi where server_type = 0
+        <include refid="queryConutCondition"></include>
+    </select>
+
+    <select id="queryTiltCount" resultType="int">
+        SELECT count(id) from model_server_info msi where server_type = 1
+        <include refid="queryConutCondition"></include>
+    </select>
+
+    <sql id="queryConutCondition">
+        <if test="_parameter != null">
+            <if test="serverName != null and serverName != ''">
+                and msi.server_name ~ #{serverName}
+            </if>
+            <if test="serverStatus != -2">
+                and msi.status = #{serverStatus}
+            </if>
+            <if test="publishor != null and publishor != ''">
+                and msi.publishor ~ #{publishor}
+            </if>
+        </if>
+    </sql>
+
+    <select id="queryModellist" resultMap="modelEntityMap" parameterType="String">
+        SELECT
+        msinfo.id,
+        msinfo.server_name,
+        msinfo.status,
+        msinfo.product_num,
+        msinfo.publish_time,
+        msinfo.update_time,
+        msinfo.publishor,
+        msinfo.description,
+        msinfo.server_type,
+        msinfo.is_public,
+        mpi.product_id,
+        mpi.server_id,
+        mpi.product_name,
+        mpi.file_type,
+        mpi.file_url,
+        mpi.is_directory
+        from
+        (SELECT
+        msi.id,
+        msi.server_name,
+        msi.status,
+        msi.product_num,
+        msi.publish_time,
+        msi.update_time,
+        msi.publishor,
+        msi.description,
+        msi.server_type,
+        msi.is_public
+        from
+        model_server_info msi
+        where
+        msi.server_type = 0
+        <include refid="serverQueryCondition"></include>
+        ) msinfo
+        left join model_product_info mpi
+        on msinfo.id = mpi.server_id
+        where msinfo.server_type = 0
+        <include refid="modelOrderCondition"></include>
+    </select>
+
+
+    <sql id="modelOrderCondition">
+        <choose>
+            <when test="pageInfo != null">
+                <choose>
+                    <when test="pageInfo.sidx != null and pageInfo.sidx != ''">
+                        <if test="pageInfo.sidx == 'serverName'">
+                            order by server_name ${pageInfo.sord}
+                        </if>
+                        <if test="pageInfo.sidx == 'publishor'">
+                            order by publishor ${pageInfo.sord}
+                        </if>
+                    </when>
+                    <otherwise>
+                        order by publish_time desc
+                    </otherwise>
+                </choose>
+            </when>
+            <otherwise>
+                order by publish_time desc
+            </otherwise>
+        </choose>
+    </sql>
+
+
+
+    <sql id="modelQueryCondition">
+        <choose>
+            <when test="_parameter == '游客'">
+                and msi.is_public = 1
+            </when>
+            <otherwise>
+                and
+                case  (
+                select uri.role_id from user_info ui
+                left join user_role_info uri
+                on uri.user_id = ui.user_id
+                where ui.user_name = #{userName}
+                order by role_id
+                limit 1)
+                when 1
+                then
+                1=1
+                else
+                (msi.publishor = #{userName} or msi.is_public = 1)
+                end
+            </otherwise>
+        </choose>
+    </sql>
+
+    <!-- 获取倾斜射影列表 -->
+    <select id="queryTiltlist" resultType="modelEntity" parameterType="String">
+        SELECT
+        msi.id AS id,
+        msi.server_name AS serverName,
+        msi.status AS status,
+        msi.publish_time AS publishTime,
+        msi.update_time AS updateTime,
+        msi.publishor AS publishor,
+        msi.description AS description,
+        msi.file_url AS url,
+        msi.product_name AS productName,
+        msi.server_type AS serverType,
+        msi.is_public AS isPublic,
+        msi.lon_position AS lon,
+        msi.lat_position AS lat,
+        msi.hei_position AS hei,
+        msi.offset_height AS offsetHeight
+        from model_server_info msi
+        where msi.server_type = 1
+        <include refid="serverQueryCondition"></include>
+    </select>
+
+    <sql id="serverQueryCondition">
+        <if test="serverName != null and serverName != ''">
+            and msi.server_name ~ #{serverName}
+        </if>
+        <if test="serverStatus != -2">
+            and msi.status = #{serverStatus}
+        </if>
+        <if test="publishor != null and publishor != ''">
+            and msi.publishor ~ #{publishor}
+        </if>
+        <choose>
+            <when test="pageInfo != null">
+                <choose>
+                    <when test="pageInfo.sidx != null and pageInfo.sidx != ''">
+                        <if test="pageInfo.sidx == 'serverName'">
+                            order by server_name ${pageInfo.sord}
+                        </if>
+                        <if test="pageInfo.sidx == 'publishor'">
+                            order by publishor ${pageInfo.sord}
+                        </if>
+                    </when>
+                    <otherwise>
+                        order by publish_time desc
+                    </otherwise>
+                </choose>
+                <if test="pageInfo.pageSize != 0">
+                    LIMIT #{pageInfo.pageSize} offset (${pageInfo.pageNum} - 1)*${pageInfo.pageSize}
+                </if>
+            </when>
+            <otherwise>
+                order by publish_time desc
+            </otherwise>
+        </choose>
+    </sql>
+
+
+
+    <!-- 根据服务id  获取当前服务下的产品list -->
+    <select id="queryProducts" parameterType="int" resultType="modelProduct">
+        SELECT
+        mpi.product_id AS productId,
+		mpi.server_id as modelServerId,
+		mpi.product_name as productName,
+		mpi.file_type as fileType,
+		mpi.file_url as fileUrl,
+		mpi.is_directory as isDirectory
+        FROM model_product_info mpi
+        WHERE server_id = #{modelServerid}
+    </select>
+
+
+    <!-- 编辑服务列表 -->
+    <update id="editModelServer" parameterType="modelEntity">
+        UPDATE model_server_info
+        SET
+        is_public = #{isPublic},
+        server_name = #{serverName},
+        status = #{status}
+        <if test="description != null and description != '' ">
+            ,description = #{description}
+        </if>
+        <if test="productNum != 0">
+            ,product_num = #{productNum}
+        </if>
+        <if test="updateTime != null">
+            ,update_time = #{updateTime}
+        </if>
+        <if test="url != null and url != ''">
+            ,file_url = #{url}
+        </if>
+        <if test="lon != null">
+            ,lon_position = #{lon}
+            ,lat_position = #{lat}
+            ,hei_position = #{hei}
+        </if>
+        <if test="offsetHeight != null">
+            ,offset_height = #{offsetHeight}
+        </if>
+        where
+        id = #{id}
+    </update>
+
+    <!-- 删除模型产品 -->
+    <delete id="deleteModelProduct" parameterType="list">
+        delete from model_product_info
+        where product_id in
+        <foreach collection="list" item="product" open="(" close=")" separator=",">
+            #{product.productId}
+        </foreach>
+    </delete>
+
+    <!-- 删除模型服务 -->
+    <delete id="deleteModelServer" parameterType="list">
+        delete from model_server_info
+        where id in
+        <foreach collection="list" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <!-- 修改模型服务列表 -->
+    <update id="updateServerStatus" parameterType="int">
+        UPDATE public.model_server_info
+         SET status =
+         CASE status
+	         WHEN 0 then 1
+	         else 0
+	     END
+	     where id = #{id}
+    </update>
+
+    <select id="queryServerUrl" parameterType="Map" resultType="String">
+         SELECT
+		 case
+		 when server_type = 0
+		 then
+		(select
+		mpi.file_url as fileUrl
+		from
+		model_server_info msi
+		left join model_product_info mpi
+		on msi.id = mpi.server_id
+		WHERE msi.server_name = #{serverName}
+		AND mpi.product_name = #{productName})
+		else
+		(select
+		msi.file_url AS fileUrl
+		from
+		model_server_info msi
+		WHERE msi.server_name =  #{serverName}
+		)
+		END
+		from model_server_info
+		 WHERE server_name = #{serverName}
+    </select>
+
+    <select id="queryServerStatus" parameterType="String" resultType="int">
+        SELECT
+        msi.status
+        from
+        model_server_info msi
+        where
+        msi.server_name = #{serverName}
+    </select>
+
+    <select id="queryProductInfo" parameterType="int" resultType="modelProduct">
+        SELECT
+         product_id AS productId,
+         product_name AS productName,
+         file_type AS fileType,
+         file_url AS fileUrl,
+         is_directory AS isDirectory
+        FROM model_product_info
+        WHERE product_id = #{productId}
+    </select>
+
+    <select id="queryServerFileUrl" parameterType="int" resultType="String">
+        SELECT file_url FROM model_server_info
+        WHERE id = #{serverId}
+    </select>
+
+    <update id="updateServerStatusByName">
+        update
+        model_server_info
+        SET status = #{status}
+        where
+        server_name = #{name}
+    </update>
+
+    <update id="updateOffsetHeight">
+        update
+        model_server_info
+        set offset_height = #{offsetHeight}
+        where id = #{id}
+    </update>
+</mapper>

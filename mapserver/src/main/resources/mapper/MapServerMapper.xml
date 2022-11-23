@@ -1,0 +1,1442 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.MapServerMapper">
+     
+     <resultMap type="dataServerEntity" id="dataServerEntity">
+         <id column="server_id" property="serverId" />
+         <result column="server_name" property="serverName"/>
+         <result column="layer_name" property="layerName"/>
+         <result column="file_type" property="fileType"/>
+         <result column="server_status" property="status"/>
+         <result column="publish_time" property="publishTime"/>
+         <result column="publishor" property="publishor"/>
+         <result column="update_time" property="updateTime"/>
+         <result column="data_type" property="dataType"/>
+         <result column="file_url" property="dataUrl"/>
+         <result column="description" property="description"/>
+         <result column="open_tiled" property="openTiled"/>
+         <result column="encode_name" property="encoding"/>
+         <result column="is_public" property="isPublic"/>
+         <result column="server_token" property="serverToken"/>
+         <result column="fail_reson" property="failReason"/>
+         <result column="is_layer_group" property="layerGroupFlag"/>
+         <result column="pulished_proctol" property="publisedProctol"/>
+		 <result column="server_show" property="serverShow" />
+		 <result column="over_view" property="isPyamid" />
+	     <association property="featureInfo" javaType="org.pygisserver.web.entity.FeatureInfo">
+			 <id column="feature_id" property="featureId"/>
+			 <result column="resource_crs" property="resourceSrs"/>
+			 <result column="native_crs" property="nativeSrs"/>
+			 <result column="projection_policy" property="projectionPolicy"/>
+			 <result column="native_bbox" property="nativeLatLon"/>
+			 <result column="resource_bbox" property="resourceBbox"/>
+			 <result column="zoom_level" property="zoomLevel"/>
+			 <result column="data_format" property="dataType"/>
+			 <result column="feature_size" property="totalFeatures"/>
+			 <result column="tile_width" property="tileWidth"/>
+			 <result column="tile_height" property="tileHeight"/>
+			 <result column="tile_extension" property="tileExtension"/>
+			 <result column="sea_chart_settings" property="seaChartSettingJson"/>
+			 <result column="sea_chart_identifier" property="seaChartIdentifier"/>
+			 <result column="sea_chart_scale" property="seaChartScale"/>
+			 <result column="tile_origin_flag" property="origin"/>
+	          <result column="input_transparent_color" property="inputTransParentColor"/>
+	          <result column="output_transparent_color" property="outPutTransParentColor"/>
+	     </association>
+	     <association property="styleInfo" javaType="org.pygisserver.web.entity.StyleInfo">
+	         <id column="id" property="id"/>
+	         <result column="style_id" property="styleId"/>
+	         <result column="style_name" property="sldName"/>
+	         <result column="file_name" property="fileName"/>
+	         <result column="url" property="url"/>
+	         <result column="is_color" property="isColor"/>
+	         <result column="is_default" property="isDefault"/>
+	     </association>
+	     <association property="rasterColor" javaType="org.pygisserver.web.entity.RasterColorMap">
+	         <id column="id" property="id"/>
+	         <result column="color_map_id" property="colorId"/>
+	         <result column="color_map_name" property="colorName"/>
+	         <result column="color_map_url" property="colorUrl"/>
+	     </association>
+	     <collection property="layerGroups" ofType="LayerGroup" select="getLayerGroups" column="server_id">
+	        <!--  <id column="group_id" property="LayerGroupId"/>
+	         <result column="layer_Name" property="layerName"/>
+	         <result column="style_name" property="styleName"/>
+	         <result column="min_level" property="minLevel"/>
+	         <result column="max_level" property="maxlevel"/> -->
+	     </collection>
+     </resultMap>
+     
+     <resultMap type="postGisConnectEntity" id="postGisEntity">
+         <id column="db_id" property="dbId" />
+         <result column="data_source_name" property="dataSourceName"/>
+         <result column="database_name" property="databaseName"/>
+         <result column="database_ip" property="databaseIp"/>
+         <result column="port" property="port"/>
+         <result column="user_name" property="userName"/>
+         <result column="password" property="password"/>
+         <result column="publisher" property="publisher"/>
+         <result column="db_type" property="dbType"/>
+         <result column="publish_time" property="publishTime"/>
+         <result column="update_time" property="updateTime"/>
+         <result column="db_status" property="dbStatus"/>
+     </resultMap>
+
+    <select id="getLayerGroups" resultType="LayerGroup" parameterType="int"> 
+        select 
+        group_id as LayerGroupId,
+        mfi.layer_Name as layerName,
+        style_name as styleName,
+        remote_url as remoteUrl,
+        server_type as serverType,
+        ogc_protocal as ogcProtocal,
+        min_level as minLevel,
+        max_level as maxlevel,
+        msi.file_url as fileUrl
+        from
+        layer_group_info mfi
+        left join
+        map_server_info msi
+        on mfi.layer_Name = msi.server_name
+        where group_id = #{serverId}
+        order by id
+    </select>
+    
+    <select id="queryServerProtocolInfo" resultType="serverProtocolInfo"> 
+        select 
+        protocol_id as protocolId,
+        protocol_name as protocolName,
+        version_list as versionList,
+        tile_grid_set as tileGridSet,
+        support_format as supportFormat
+        from server_protocol_info
+    </select>
+    
+    <select id="queryServerInfoById" parameterType="int" resultMap="dataServerEntity">
+        SELECT 
+	        msi.server_id, 
+	        msi.server_name, 
+	        msi.layer_name, 
+	        msi.file_type,
+	        msi.server_status, 
+	        msi.publish_time, 
+	        msi.publishor, 
+	        msi.update_time, 
+	        msi.data_type, 
+	        msi.file_url,
+	        msi.encode_name,
+	        msi.is_public,
+	        msi.server_token,
+	        msi.fail_reson,
+	        msi.is_layer_group,
+	        msi.description,
+	        msi.open_tiled,
+	        msi.pulished_proctol,
+	        msi.over_view,
+	        mfi.feature_id,
+	        mfi.resource_crs,
+	        mfi.native_crs,
+	        mfi.projection_policy,
+	        mfi.native_bbox,
+	        mfi.resource_bbox,
+	        mfi.zoom_level,
+	        mfi.data_format,
+	        mfi.feature_size,
+	        mfi.tile_width,
+	        mfi.tile_height,
+	        mfi.tile_extension,
+	        mfi.sea_chart_settings::jsonb,
+	        mfi.sea_chart_identifier,
+	        mfi.sea_chart_scale,
+	        mfi.tile_origin_flag,
+	        mfi.input_transparent_color,
+	        mfi.output_transparent_color,
+	        si.id,
+	        si.style_id,
+	        si.style_name,
+	        si.file_name,
+	        si.url
+	    FROM map_server_info msi
+	    left join map_feature_info mfi
+	    on msi.server_id = mfi.server_id
+	    left join server_style_info sti
+	    on msi.server_id = sti.server_id
+	    left join style_info si
+	    on si.id = sti.style_id
+	    where msi.server_id = #{serverId}
+    </select>
+
+	<select id="queryRestInfoById" parameterType="int" resultMap="dataServerEntity">
+		SELECT
+			msi.server_id,
+			msi.server_name,
+			msi.layer_name,
+			msi.file_type,
+			msi.server_status,
+			msi.publish_time,
+			msi.publishor,
+			msi.update_time,
+			msi.data_type,
+			msi.file_url,
+			msi.encode_name,
+			msi.is_public,
+			msi.server_token,
+			msi.fail_reson,
+			msi.is_layer_group,
+			msi.description,
+			msi.open_tiled,
+			msi.pulished_proctol
+		FROM rest_server_info msi
+		where msi.server_id = #{serverId}
+	</select>
+    
+    
+     <select id="queryServerDataByIds" parameterType="list" resultMap="dataServerEntity">
+        SELECT 
+	        msi.server_id, 
+	        msi.server_name, 
+	        msi.layer_name, 
+	        msi.file_type,
+	        msi.server_status, 
+	        msi.publish_time, 
+	        msi.publishor, 
+	        msi.update_time, 
+	        msi.data_type, 
+	        msi.file_url,
+	        msi.encode_name,
+	        msi.is_public,
+	        msi.server_token,
+	        msi.fail_reson,
+	        msi.is_layer_group,
+	        msi.description,
+	        msi.open_tiled,
+	        msi.pulished_proctol,
+	        msi.over_view,
+	        mfi.feature_id,
+	        mfi.resource_crs,
+	        mfi.native_crs,
+	        mfi.projection_policy,
+	        mfi.native_bbox,
+	        mfi.resource_bbox,
+	        mfi.zoom_level,
+	        mfi.data_format,
+	        mfi.feature_size,
+	        mfi.tile_width,
+	        mfi.tile_height,
+	        mfi.tile_extension,
+	        mfi.sea_chart_settings::jsonb,
+	        mfi.sea_chart_identifier,
+	        mfi.sea_chart_scale,
+	        mfi.tile_origin_flag,
+	        mfi.input_transparent_color,
+	        mfi.output_transparent_color,
+	        si.id,
+	        si.style_id,
+	        si.style_name,
+	        si.file_name,
+	        si.url
+	    FROM map_server_info msi
+	    left join map_feature_info mfi
+	    on msi.server_id = mfi.server_id
+	    left join server_style_info sti
+	    on msi.server_id = sti.server_id
+	    left join style_info si
+	    on si.id = sti.style_id
+	     where msi.server_id in
+	    <foreach collection="list" index="id" separator="," item="serverId" open="(" close=")">
+	    	 #{serverId}
+	    </foreach>
+    </select>
+    
+     <select id="queryServerInfoByServerName" parameterType="String" resultMap="dataServerEntity">
+        SELECT 
+	        msi.server_id, 
+	        msi.server_name, 
+	        msi.layer_name, 
+	        msi.file_type,
+	        msi.server_status, 
+	        msi.publish_time, 
+	        msi.publishor, 
+	        msi.update_time, 
+	        msi.data_type, 
+	        msi.file_url,
+	        msi.encode_name,
+	        msi.is_public,
+	        msi.server_token,
+	        msi.fail_reson,
+	        msi.is_layer_group,
+	        msi.description,
+	        msi.open_tiled,
+	        msi.pulished_proctol,
+	        mfi.feature_id,
+	        mfi.resource_crs,
+	        mfi.native_crs,
+	        mfi.projection_policy,
+	        mfi.native_bbox,
+	        mfi.resource_bbox,
+	        mfi.zoom_level,
+	        mfi.data_format,
+	        mfi.feature_size,
+	        mfi.tile_width,
+	        mfi.tile_height,
+	        mfi.tile_extension,
+	        mfi.sea_chart_settings::jsonb,
+	        mfi.sea_chart_identifier,
+	        mfi.sea_chart_scale,
+	        mfi.tile_origin_flag,
+	        mfi.input_transparent_color,
+	        mfi.output_transparent_color,
+	        si.id,
+	        si.style_id,
+	        si.style_name,
+	        si.file_name,
+	        si.url
+	    FROM map_server_info msi
+	    left join map_feature_info mfi
+	    on msi.server_id = mfi.server_id
+	    left join server_style_info sti
+	    on msi.server_id = sti.server_id
+	    left join style_info si
+	    on si.id = sti.style_id
+	    where msi.server_name = #{layerName}
+    </select>
+
+	<select id="queryRestInfoByServerName" parameterType="String" resultMap="dataServerEntity">
+        SELECT
+	        msi.server_id,
+	        msi.server_name,
+	        msi.layer_name,
+	        msi.file_type,
+	        msi.server_status,
+	        msi.publish_time,
+	        msi.publishor,
+	        msi.update_time,
+	        msi.data_type,
+	        msi.file_url,
+	        msi.encode_name,
+	        msi.is_public,
+	        msi.server_token,
+	        msi.fail_reson,
+	        msi.is_layer_group,
+	        msi.description,
+	        msi.open_tiled,
+	        msi.pulished_proctol
+	    FROM rest_server_info msi
+	    where msi.server_name = #{layerName}
+    </select>
+
+
+      <select id="queryServerData" resultMap="dataServerEntity" parameterType="requestQueryCondition">
+         SELECT 
+	        msi.server_id, 
+	        msi.server_name, 
+	        msi.layer_name, 
+	        msi.file_type,
+	        msi.server_status, 
+	        msi.publish_time, 
+	        msi.publishor, 
+	        msi.update_time, 
+	        msi.data_type, 
+	        msi.file_url,
+	        msi.encode_name,
+	        msi.is_public,
+	        msi.server_token,
+	        msi.fail_reson,
+	        msi.is_layer_group,
+	        msi.description,
+	        msi.open_tiled,
+	        msi.pulished_proctol,
+	        mfi.feature_id,
+	        mfi.resource_crs,
+	        mfi.native_crs,
+	        mfi.projection_policy,
+	        mfi.native_bbox,
+	        mfi.resource_bbox,
+	        mfi.zoom_level,
+	        mfi.data_format,
+	        mfi.feature_size,
+	        mfi.tile_width,
+	        mfi.tile_height,
+	        mfi.tile_extension,
+	        mfi.sea_chart_settings::jsonb,
+	        mfi.sea_chart_identifier,
+	        mfi.sea_chart_scale,
+	        mfi.tile_origin_flag,
+	        mfi.input_transparent_color,
+	        mfi.output_transparent_color,
+	        si.id,
+	        si.style_id,
+	        si.style_name,
+	        si.file_name,
+	        si.url,
+	        si.is_color,
+	        si.is_default,
+	        cm.color_map_id,
+	        cm.color_map_name,
+	        cm.color_map_url,
+	        msi.server_show,
+	        msi.over_view
+	    FROM (
+	    		select
+				server_id,
+				server_name,
+				layer_name,
+				file_type,
+				server_status, 
+				publish_time, 
+				publishor, 
+				update_time, 
+				data_type, 
+				file_url,
+				encode_name,
+				is_public,
+				server_token,
+				fail_reson,
+				is_layer_group,
+				description,
+				pulished_proctol,
+				open_tiled,
+				server_show,
+				over_view
+			from map_server_info
+			where 1 = 1
+			<if test="_parameter != null">
+	        	<include refid="serverQueryCondition"></include>
+	        </if>
+	    ) msi
+	    left join map_feature_info mfi
+	    on msi.server_id = mfi.server_id
+	    left join server_style_info sti
+	    on msi.server_id = sti.server_id
+	    left join style_info si
+	    on si.id = sti.style_id
+	    left join server_color_map scm
+	    on msi.server_id = scm.server_id
+	    left join color_map cm
+	    on scm.color_map_id = cm.color_map_id
+		order by server_show asc,
+	    <choose>
+              <when test="pageInfo != null">
+                  <choose>
+                      <when test="pageInfo.sidx != null and pageInfo.sidx != ''">
+                          <if test="pageInfo.sidx == 'serverName'">
+                              server_name ${pageInfo.sord}
+                          </if>
+                          <if test="pageInfo.sidx == 'publishor'">
+                              publishor ${pageInfo.sord}
+                          </if>
+                      </when>
+                      <otherwise>
+                           publish_time desc
+                      </otherwise>
+                  </choose>
+              </when>
+              <otherwise>
+                   publish_time desc
+              </otherwise>
+          </choose>
+      </select>
+      <select id="queryRestData" resultMap="dataServerEntity" parameterType="requestQueryCondition">
+         SELECT
+	        msi.server_id,
+	        msi.server_name,
+	        msi.layer_name,
+	        msi.file_type,
+	        msi.server_status,
+	        msi.publish_time,
+	        msi.publishor,
+	        msi.update_time,
+	        msi.data_type,
+	        msi.file_url,
+	        msi.encode_name,
+	        msi.is_public,
+	        msi.server_token,
+	        msi.fail_reson,
+	        msi.is_layer_group,
+	        msi.description,
+	        msi.open_tiled,
+	        msi.pulished_proctol,
+-- 	        mfi.feature_id,
+-- 	        mfi.resource_crs,
+-- 	        mfi.native_crs,
+-- 	        mfi.projection_policy,
+-- 	        mfi.native_bbox,
+-- 	        mfi.resource_bbox,
+-- 	        mfi.zoom_level,
+-- 	        mfi.data_format,
+-- 	        mfi.feature_size,
+-- 	        mfi.tile_width,
+-- 	        mfi.tile_height,
+-- 	        mfi.tile_extension,
+-- 	        mfi.sea_chart_settings::jsonb,
+-- 	        mfi.sea_chart_identifier,
+-- 	        mfi.sea_chart_scale,
+-- 	        mfi.tile_origin_flag,
+-- 	        mfi.input_transparent_color,
+-- 	        mfi.output_transparent_color,
+-- 	        si.id,
+-- 	        si.style_id,
+-- 	        si.style_name,
+-- 	        si.file_name,
+-- 	        si.url,
+-- 	        si.is_color,
+-- 	        si.is_default,
+-- 	        cm.color_map_id,
+-- 	        cm.color_map_name,
+-- 	        cm.color_map_url,
+	        msi.server_show,
+	        msi.over_view
+	    FROM (
+	    		select
+				server_id,
+				server_name,
+				layer_name,
+				file_type,
+				server_status,
+				publish_time,
+				publishor,
+				update_time,
+				data_type,
+				file_url,
+				encode_name,
+				is_public,
+				server_token,
+				fail_reson,
+				is_layer_group,
+				description,
+				pulished_proctol,
+				open_tiled,
+				server_show,
+				over_view
+			from rest_server_info
+			where 1 = 1
+			<if test="_parameter != null">
+	        	<include refid="serverQueryCondition"></include>
+	        </if>
+	    ) msi
+-- 	    left join map_feature_info mfi
+-- 	    on msi.server_id = mfi.server_id
+-- 	    left join server_style_info sti
+-- 	    on msi.server_id = sti.server_id
+-- 	    left join style_info si
+-- 	    on si.id = sti.style_id
+-- 	    left join server_color_map scm
+-- 	    on msi.server_id = scm.server_id
+-- 	    left join color_map cm
+-- 	    on scm.color_map_id = cm.color_map_id
+		order by server_show asc,
+	    <choose>
+              <when test="pageInfo != null">
+                  <choose>
+                      <when test="pageInfo.sidx != null and pageInfo.sidx != ''">
+                          <if test="pageInfo.sidx == 'serverName'">
+                              server_name ${pageInfo.sord}
+                          </if>
+                          <if test="pageInfo.sidx == 'publishor'">
+                              publishor ${pageInfo.sord}
+                          </if>
+                      </when>
+                      <otherwise>
+                           publish_time desc
+                      </otherwise>
+                  </choose>
+              </when>
+              <otherwise>
+                   publish_time desc
+              </otherwise>
+          </choose>
+      </select>
+
+      <select id="queryServerDataCount" resultType="int" parameterType="requestQueryCondition">
+         SELECT Count(distinct(msi.server_id)) from map_server_info msi
+         where 1=1 and server_show = 0
+		  <if test="_parameter != null">
+	         <if test="serverName != null and serverName != ''">
+	              and msi.server_name ~* #{serverName}
+	          </if>
+	          <if test="serverStatus != -2">
+	              and msi.server_status = #{serverStatus}
+	          </if>
+	          <if test="serverProtocol != null and serverProtocol != ''">
+	              and msi.pulished_proctol ~* #{serverProtocol}
+	          </if>
+	          <if test="publishor != null and publishor != ''">
+	               and msi.publishor ~ #{publishor}
+	          </if>
+         </if>
+     </select>
+
+	<select id="queryRestDataCount" resultType="int" parameterType="requestQueryCondition">
+		SELECT Count(distinct(msi.server_id)) from rest_server_info msi
+		where 1=1 and server_show = 0
+		<if test="_parameter != null">
+			<if test="serverName != null and serverName != ''">
+				and msi.server_name ~* #{serverName}
+			</if>
+			<if test="serverStatus != -2">
+				and msi.server_status = #{serverStatus}
+			</if>
+			<if test="serverProtocol != null and serverProtocol != ''">
+				and msi.pulished_proctol ~* #{serverProtocol}
+			</if>
+			<if test="publishor != null and publishor != ''">
+				and msi.publishor ~ #{publishor}
+			</if>
+		</if>
+	</select>
+      
+      
+      <sql id="serverQueryCondition">
+          <if test="serverName != null and serverName != ''">
+              and server_name ~* #{serverName}
+          </if>
+          <if test="serverStatus != -2">
+              and server_status = #{serverStatus}
+          </if>
+          <if test="publishor != null and publishor != ''">
+               and publishor ~ #{publishor}
+          </if>
+           <if test="serverProtocol != null and serverProtocol != ''">
+              and pulished_proctol ~* #{serverProtocol}
+          </if>
+		  order by server_show asc ,
+          <choose>
+              <when test="pageInfo != null">
+                  <choose>
+                      <when test="pageInfo.sidx != null and pageInfo.sidx != ''">
+                          <if test="pageInfo.sidx == 'serverName'">
+                              server_name ${pageInfo.sord}
+                          </if>
+                          <if test="pageInfo.sidx == 'publishor'">
+                              publishor ${pageInfo.sord}
+                          </if>
+                      </when>
+                      <otherwise>
+                           publish_time desc
+                      </otherwise>
+                  </choose>
+                  <if test="pageInfo.pageSize != 0">
+                       LIMIT #{pageInfo.pageSize} offset (${pageInfo.pageNum} - 1)*${pageInfo.pageSize}
+                  </if>
+              </when>
+              <otherwise>
+                   publish_time desc
+              </otherwise>
+          </choose>
+      </sql>
+      
+      <select id="querySeedTaskNum" resultType="int" parameterType="requestQueryCondition">
+          select
+              count(*) 
+          from 
+              map_server_info msi left join map_feature_info mfi on msi.server_id = mfi.server_id
+	      where msi.data_type NOT IN (6,7)  
+	          and (msi.pulished_proctol ~* 'wmts' or msi.pulished_proctol ~* 'tms')
+		  	  and msi.is_public = 1 and msi.server_show = 0
+	      <if test="_parameter != null">
+       	 	  <if test="serverName != null and serverName != ''">
+              	  and msi.server_name ~* #{serverName}
+          	  </if>
+          </if>
+      </select>
+      
+      <select id="queryTileServerData" resultMap="dataServerEntity" parameterType="requestQueryCondition">
+         SELECT 
+	        msi.server_id, 
+	        msi.server_name, 
+	        msi.layer_name, 
+	        msi.file_type,
+	        msi.server_status, 
+	        msi.publish_time, 
+	        msi.publishor, 
+	        msi.update_time, 
+	        msi.data_type, 
+	        msi.file_url,
+	        msi.is_public,
+	        msi.description,
+	        msi.open_tiled,
+	        msi.pulished_proctol,
+	        mfi.feature_id,
+	        mfi.resource_crs,
+	        mfi.native_crs,
+	        mfi.projection_policy,
+	        mfi.native_bbox,
+	        mfi.resource_bbox,
+	        mfi.tile_width,
+	        mfi.tile_height,
+	        mfi.zoom_level,
+	        mfi.sea_chart_scale,
+	        mfi.tile_origin_flag,
+	        mfi.input_transparent_color,
+	        mfi.output_transparent_color
+	    FROM map_server_info msi
+	    left join map_feature_info mfi
+	    on msi.server_id = mfi.server_id
+	    where msi.data_type NOT IN (6,7)  
+	    and (msi.pulished_proctol ~* 'wmts' or msi.pulished_proctol ~* 'tms')
+	    and msi.is_public = 1  and msi.server_show = 0
+	    <if test="_parameter != null">
+			<if test="serverName != null and serverName != ''">
+				and msi.server_name ~* #{serverName}
+			</if>
+			<if test="pageInfo != null">
+				order by msi.publish_time desc
+			</if>
+          	<choose>
+              <when test="pageInfo != null">
+                  <if test="pageInfo.pageSize != 0">
+                       LIMIT ${pageInfo.pageSize} offset (${pageInfo.pageNum} - 1)*${pageInfo.pageSize}
+                  </if>
+              </when>
+              <otherwise>
+              </otherwise>
+          </choose>
+        </if>
+      </select>
+
+
+     <!-- 保存服务数据 -->
+     <insert id="saveMapData" parameterType="dataServerEntity" useGeneratedKeys="true" keyProperty="serverId">
+         INSERT INTO map_server_info
+         (server_id,server_name,file_type,layer_name,server_status,publish_time,
+         publishor,update_time,data_type,file_url,description,encode_name,open_tiled,is_public,server_token,is_layer_group,pulished_proctol,server_show, over_view) VALUES
+         (DEFAULT,#{serverName},#{fileType},#{layerName},#{status},#{publishTime},#{publishor},#{updateTime},
+         #{dataType},#{dataUrl},#{description},#{encoding},#{openTiled},#{isPublic},#{serverToken},#{layerGroupFlag},#{publisedProctol},#{serverShow}, #{isPyamid})
+     </insert>
+
+	<insert id="saveRestData" parameterType="dataServerEntity" useGeneratedKeys="true" keyProperty="serverId">
+		INSERT INTO rest_server_info
+		(server_id,server_name,file_type,layer_name,server_status,publish_time,
+		 publishor,update_time,data_type,file_url,description,encode_name,open_tiled,is_public,server_token,is_layer_group,pulished_proctol,server_show, over_view) VALUES
+			(DEFAULT,#{serverName},#{fileType},#{layerName},#{status},#{publishTime},#{publishor},#{updateTime},
+			 #{dataType},#{dataUrl},#{description},#{encoding},#{openTiled},#{isPublic},#{serverToken},#{layerGroupFlag},#{publisedProctol},#{serverShow}, #{isPyamid})
+	</insert>
+     
+     <insert id="saveMapServerDatas" parameterType="list" useGeneratedKeys="true" keyProperty="serverId">
+     	 INSERT INTO map_server_info
+         (server_id,server_name,file_type,layer_name,server_status,publish_time,
+         publishor,update_time,data_type,file_url,description,encode_name,open_tiled,is_public,server_token,is_layer_group,pulished_proctol,server_show, over_view) VALUES
+         <foreach collection="list" index="id" separator="," item="mapdata">
+          (DEFAULT,#{mapdata.serverName},#{mapdata.fileType},#{mapdata.layerName},#{mapdata.status},#{mapdata.publishTime},#{mapdata.publishor},#{mapdata.updateTime},
+         #{mapdata.dataType},#{mapdata.dataUrl},#{mapdata.description},#{mapdata.encoding},#{mapdata.openTiled},#{mapdata.isPublic},#{mapdata.serverToken},#{mapdata.layerGroupFlag},
+         #{mapdata.publisedProctol},#{mapdata.serverShow},#{mapdata.isPyamid})
+         </foreach>
+     </insert>
+
+	<insert id="saveRestServerDatas" parameterType="list" useGeneratedKeys="true" keyProperty="serverId">
+		INSERT INTO rest_server_info
+		(server_id,server_name,file_type,layer_name,server_status,publish_time,
+		publishor,update_time,data_type,file_url,description,encode_name,open_tiled,is_public,server_token,is_layer_group,pulished_proctol,server_show, over_view) VALUES
+		<foreach collection="list" index="id" separator="," item="mapdata">
+			(DEFAULT,#{mapdata.serverName},#{mapdata.fileType},#{mapdata.layerName},#{mapdata.status},#{mapdata.publishTime},#{mapdata.publishor},#{mapdata.updateTime},
+			#{mapdata.dataType},#{mapdata.dataUrl},#{mapdata.description},#{mapdata.encoding},#{mapdata.openTiled},#{mapdata.isPublic},#{mapdata.serverToken},#{mapdata.layerGroupFlag},
+			#{mapdata.publisedProctol},#{mapdata.serverShow},#{mapdata.isPyamid})
+		</foreach>
+	</insert>
+     
+     <update id="updateServerStatusByIds">
+        update map_server_info
+        set server_status = #{status}
+        where server_id in
+        <foreach collection="list" item="id" open="(" close=")" separator=",">
+             #{id}
+         </foreach>
+     </update>
+
+	<update id="updateRestStatusByIds">
+		update rest_server_info
+		set server_status = #{status}
+		where server_id in
+		<foreach collection="list" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</update>
+     
+     <update id="updateMapServerData" parameterType="list">
+           <foreach collection="list" index="id" item="mapData" separator=";">
+	           update map_server_info
+	           set server_status = #{mapData.status},
+	           fail_reson = #{mapData.failReason}
+	           where server_id = #{mapData.serverId}
+           </foreach>
+     </update>
+
+	<update id="updateRestServerData" parameterType="list">
+		<foreach collection="list" index="id" item="mapData" separator=";">
+			update rest_server_info
+			set server_status = #{mapData.status},
+			fail_reson = #{mapData.failReason}
+			where server_id = #{mapData.serverId}
+		</foreach>
+	</update>
+     
+     
+     <insert id="saveStyleInfo" parameterType="styleInfo">
+         INSERT INTO server_style_info(id,style_id,server_id)
+         VALUES(DEFAULT,#{id},#{serverId})
+     </insert>
+     
+     
+     <!-- 保存对应服务的特征信息数据 -->
+     <insert id="saveFeatureData" parameterType="featureInfo">
+         INSERT INTO map_feature_info
+         (feature_id,server_id,resource_crs,native_crs,projection_policy,
+         native_bbox,resource_bbox,zoom_level,data_format,feature_size,
+         tile_width,tile_height,tile_extension,sea_chart_settings,
+         sea_chart_identifier,sea_chart_scale,tile_origin_flag,input_transparent_color,output_transparent_color)
+          VALUES
+         (DEFAULT,#{serverId},#{resourceSrs},#{nativeSrs},#{projectionPolicy},#{nativeLatLon},
+         #{resourceBbox},#{zoomLevel},#{dataType},#{totalFeatures},#{tileWidth},
+         #{tileHeight},#{tileExtension},#{seaChartSettingJson},
+         #{seaChartIdentifier},#{seaChartScale},#{origin},#{inputTransParentColor},#{outPutTransParentColor})
+     </insert>
+
+	<delete id="deleteLayerGroupFeature" parameterType="int">
+	     delete from map_feature_info
+	     where server_id = #{serverId}
+     </delete>
+
+	<insert id="saveStoreLayerInfo" parameterType="storelayerInfo">
+         INSERT INTO public.map_store_layer_info
+         (store_id, server_id, layer_id)
+    	 VALUES (#{storeId}, #{serverId}, #{layerId});
+     </insert>
+     
+     <!-- 获取存储id -->
+     <select id="queryStoreInfo" parameterType="list" resultType="storelayerInfo">
+         select 
+         store_id as storeId,
+         layer_id as layerId
+         from map_store_layer_info where server_id in
+         <foreach collection="list" item="id" open="(" close=")" separator=",">
+             #{id}
+         </foreach>
+     </select>
+     
+     <delete id="deleteServerData" parameterType="list">
+         delete FROM public.map_server_info
+         where server_id in
+         <foreach collection="list" item="id" open="(" close=")" separator=",">
+             #{id}
+         </foreach>
+     </delete>
+
+	<delete id="deleteRestData" parameterType="list">
+		delete FROM public.rest_server_info
+		where server_id in
+		<foreach collection="list" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+     
+     <update id="editServerData" parameterType="dataServerEntity">
+          UPDATE public.map_server_info
+		  SET
+		  open_tiled = #{openTiled},
+		  server_name = #{serverName},
+		  layer_name = #{layerName},
+		  update_time = #{updateTime}, 
+		  publishor = #{publishor},
+		  pulished_proctol = #{publisedProctol},
+		  server_status = #{status},
+		  over_view = #{isPyamid},
+		  is_layer_group = #{layerGroupFlag}
+		  <if test="description != null">
+		      ,description = #{description}
+		  </if>
+		  <if test="encoding != null">
+		      ,encode_name = #{encoding}
+		  </if>
+		 WHERE 
+		 server_id = #{serverId}
+     </update>
+
+	<update id="editRestData" parameterType="dataServerEntity">
+		UPDATE public.rest_server_info
+		SET
+		open_tiled = #{openTiled},
+		server_name = #{serverName},
+		layer_name = #{layerName},
+		update_time = #{updateTime},
+		publishor = #{publishor},
+		pulished_proctol = #{publisedProctol},
+		server_status = #{status},
+		over_view = #{isPyamid},
+		is_layer_group = #{layerGroupFlag}
+		<if test="description != null">
+			,description = #{description}
+		</if>
+		<if test="encoding != null">
+			,encode_name = #{encoding}
+		</if>
+		WHERE
+		server_id = #{serverId}
+	</update>
+     
+     <update id="editStyleInfo" parameterType="styleInfo">
+         UPDATE server_style_info
+         SET 
+         style_id = #{id}
+         WHERE 
+		 server_id =#{serverId}
+     </update>
+     
+     <update id="updateServerStatus">
+         UPDATE public.map_server_info
+         SET server_status = 
+         CASE server_status 
+	         WHEN 0 then 1
+	         when 1 then 0
+	         else server_status
+	     END
+	     where server_id = #{serverId}
+     </update>
+
+	<update id="updateRestStatus">
+		UPDATE public.rest_server_info
+		SET server_status =
+				CASE server_status
+					WHEN 0 then 1
+					when 1 then 0
+					else server_status
+					END
+		where server_id = #{serverId}
+	</update>
+
+	<update id="updateServerStatu" parameterType="int">
+		UPDATE map_server_info
+         SET server_status = 1,
+         over_view = 0
+	     where server_id = #{serverId}
+	</update>
+     
+     <select id="queryExistsLayers" resultType="String">
+         SELECT server_name From map_server_info
+     </select>
+
+	<select id="queryExistsRestLayers" resultType="String">
+		SELECT server_name From rest_server_info
+	</select>
+     
+     
+     <!-- 编辑特征信息数据 -->
+     <update id="editFeatureInfo" parameterType="featureInfo">
+         UPDATE public.map_feature_info
+		   SET sea_chart_settings=#{seaChartSettingJson}
+		   <if test="inputTransParentColor != null and inputTransParentColor != ''">
+		       ,input_transparent_color = #{inputTransParentColor}
+		   </if>
+		   <if test="outPutTransParentColor != null and outPutTransParentColor != ''">
+		       ,output_transparent_color = #{outPutTransParentColor}
+		   </if>
+ 		WHERE server_id = #{serverId};
+     </update>
+     
+     
+     <!-- 编辑存储图层信息 -->
+     <update id="editStorelayerInfo" parameterType="storelayerInfo">
+         UPDATE public.map_store_layer_info
+		   SET
+		   store_id= #{storeId}
+		   <if test="layerId != null and layerId != ''">
+		       ,layer_id= #{layerId}
+		   </if> 
+ 		WHERE server_id = #{serverId};
+     </update>
+     
+     <select id="queryTileServerBbox" resultType="String" parameterType="String">
+        select
+            mfi.native_bbox
+	     	FROM map_server_info msi
+		    left join map_feature_info mfi
+		    on msi.server_id = mfi.server_id
+		    where msi.server_show = 0
+		    and msi.server_name = #{server_name}
+     </select>
+
+	<update id="updateServerTileStatus">
+          UPDATE public.map_server_info
+		  SET
+		  server_status = #{status}
+		  where
+		  server_name = #{serverName}
+     </update>
+
+	<select id="queryLayerNamesByServerIds" parameterType="list" resultType="String">
+		SELECT
+		server_name
+		from
+		map_server_info
+		where
+		server_id in
+		<foreach collection="list" index="index" item="id"  open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</select>
+
+	<insert id="saveRasterInfo" parameterType="rasterColorMap">
+         INSERT INTO server_color_map(id,server_id,color_map_id)
+         VALUES(DEFAULT,#{serverId},#{colorId})
+     </insert>
+
+	<select id="saveOrUpdateColorModel" parameterType="rasterColorMap">
+         INSERT INTO server_color_map(id,server_id,color_map_id)
+         VALUES(DEFAULT,#{serverId},#{colorId}) ON conflict(server_id)
+         do update
+         set
+         color_map_id = #{colorId}
+     </select>
+
+	<select id="queryZoomLevel" parameterType="String" resultType="int">
+         SELECT
+         map_feature_info.zoom_level
+         FROM
+         map_feature_info
+         left join map_server_info
+         on map_feature_info.server_id = map_server_info.server_id
+         where map_server_info.layer_name = #{layer}
+     </select>
+
+	<select id="queryLayerNameByToken" parameterType="String" resultType="String">
+         SELECT
+         server_name
+         FROM
+         map_server_info
+         WHERE
+         server_token = #{token}
+     </select>
+
+	<select id="getServerStatusByIds" parameterType="list" resultType="int">
+		SELECT
+		server_id
+		from
+		map_server_info
+		where server_id in
+		<foreach collection="list" index="index" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+		and server_status != 3
+	</select>
+
+	<select id="queryUncompleteTask" resultType="String">
+          SELECT
+          	server_name
+          from
+          map_server_info
+          where server_status = 3 and server_show = 0
+     </select>
+
+	<select id="queryExistsServerName" parameterType="list" resultType="map">
+		SELECT
+		server_name,
+		publish_time
+		from
+		map_server_info
+		WHERE server_name in
+		<foreach collection="list" index="id" item="name" open="(" close=")" separator=",">
+			#{name}
+		</foreach>
+	</select>
+
+	<select id="queryServerIdByFileUrl" parameterType="String" resultType="int">
+         select server_id from map_server_info
+         where file_url ~ #{fileUrl}
+     </select>
+
+	<insert id="saveLayerGroups" parameterType="list">
+		insert into layer_group_info(group_id,layer_Name,remote_url,server_type,ogc_protocal,style_name,min_level,max_level)
+		VALUES
+		<foreach collection="list" index="id" separator="," item="layerGroup">
+			(#{layerGroup.LayerGroupId},#{layerGroup.layerName},#{layerGroup.remoteUrl},#{layerGroup.serverType},#{layerGroup.ogcProtocal}
+			,#{layerGroup.styleName},#{layerGroup.minLevel},#{layerGroup.maxlevel})
+		</foreach>
+	</insert>
+
+	<delete id="deleteLayerGroupData" parameterType="list">
+		delete from layer_group_info
+		where group_id in
+		<foreach collection="list" index="id" separator="," item="serverId" open="(" close=")">
+			#{serverId}
+		</foreach>
+	</delete>
+
+	<delete id="deleteLayerGroupByLayerName" parameterType="list">
+		delete from layer_group_info
+		where layer_Name in
+		<foreach collection="list" index="id" separator="," item="layer" open="(" close=")">
+			#{layer}
+		</foreach>
+	</delete>
+
+	<!-- TODO查看是否要 -->
+	<select id="queryLayerGroups" parameterType="list" resultType="String">
+		select server_name
+		from map_server_info
+		where server_show = 0 and server_id in
+		(
+		select group_id from layer_group_info
+		where layer_name in
+		<foreach collection="list" index="id" separator="," item="layer" open="(" close=")">
+			#{layer}
+		</foreach>
+		)
+	</select>
+
+	<select id="queryLayerGroupByServerId" parameterType="int" resultType="LayerGroup">
+			select
+				group_id as LayerGroupId,
+				layer_Name as layerName,
+				ogc_protocal as ogcProtocal,
+				style_name as styleName,
+				min_level as minLevel,
+				max_level as maxlevel
+			from layer_group_info
+			where group_id = #{serverId}
+     </select>
+
+	<select id="queryLayerGroup" parameterType="map" resultType="LayerGroup">
+         select
+			group_id as LayerGroupId,
+			msi.server_name as layerGroupName,
+			string_agg
+			(
+			case
+			when  lgi.layer_name = #{oldLayerName}
+			then
+			#{newLayerName}
+			else
+			 lgi.layer_name
+			end
+			,';') as layerName,
+			string_agg(style_name,';') as styleName
+			from layer_group_info lgi
+			left join map_server_info msi
+			on msi.server_id =  lgi.group_id
+			where msi.server_show = 0 and group_id in (
+			select group_id from layer_group_info where layer_name = #{oldLayerName}
+			)
+			group by group_id,server_name
+     </select>
+     
+     <update id="editLayerGroup" parameterType="String">
+         update layer_group_info
+         set layer_name = #{newLayerName}
+         where layer_name = #{oldLayerName}
+     </update>
+
+	<!-- 保存postgis数据-->
+	<insert id="savePostgisInfo" parameterType="postGisConnectEntity" useGeneratedKeys="true" keyProperty="dbId">
+         INSERT INTO post_gis_info
+         (db_id,data_source_name,database_name,database_ip,port,user_name,password,publisher,db_type,publish_time,update_time,db_status)
+         VALUES(DEFAULT,#{dataSourceName},#{databaseName},#{databaseIp},#{port},#{userName},#{password},
+         #{publisher},#{dbType},#{publishTime},#{updateTime},#{dbStatus})
+     </insert>
+
+	<select id="queryPostGis" parameterType="int" resultMap="postGisEntity">
+		select * from post_gis_info
+		<if test= "id != -1">
+			where db_id = #{id}
+		</if>
+	</select>
+
+	<select id="queryPostGisBySourceName" parameterType="String" resultMap="postGisEntity">
+         select * from post_gis_info where data_source_name = #{sourceName}
+     </select>
+
+	<select id="queryServerNameBySourceName" parameterType="String" resultType="String">
+         select server_name
+         from
+         map_server_info msi
+         left join postgis_server_relation_info psri
+         on msi.server_id = psri.server_id
+		 where psri.server_id
+		 in (
+		 select server_id
+		 from
+		 postgis_server_relation_info info,post_gis_info pgi
+		 where info.db_id = pgi.db_id
+		 and server_show = 0 and pgi.data_source_name = #{sourceName})
+     </select>
+
+	<select id="queryServerIdBySourceId" parameterType="int" resultType="int">
+         select msi.server_id
+         from
+         map_server_info msi
+         left join postgis_server_relation_info psri
+         on msi.server_id = psri.server_id
+		 where msi.server_show = 0 and psri.server_id
+		 in (
+		 select info.server_id
+		 from
+		 postgis_server_relation_info info,post_gis_info pgi
+		 where info.db_id = pgi.db_id and pgi.db_id = #{sourceId})
+     </select>
+
+	<select id="queryExistsSources" resultType="String">
+         SELECT data_source_name as dataSourceName From post_gis_info
+     </select>
+
+	<update id="editPostGis" parameterType="postGisConnectEntity">
+		update post_gis_info
+		set update_time=#{updateTime}
+		<if test="dataSourceName != null and dataSourceName != ''">
+			,data_source_name= #{dataSourceName}
+		</if>
+		<if test="databaseName != null and databaseName != ''">
+			,database_name= #{databaseName}
+		</if>
+		<if test="databaseIp != null and databaseIp != ''">
+			,database_ip= #{databaseIp}
+		</if>
+		<if test="port != null and port != ''">
+			,port= #{port}
+		</if>
+		<if test="userName != null and userName != ''">
+			,user_name=#{userName}
+		</if>
+		<if test="password != null and password != ''">
+			,password=#{password}
+		</if>
+		<if test="dbType != null and dbType != ''">
+			,db_type=#{dbType}
+		</if>
+		<if test="dbStatus != 0">
+			,db_status=#{dbStatus}
+		</if>
+		where db_id = #{dbId}
+	</update>
+
+	<!-- 删除不用的Postgis信息 -->
+	<delete id="deletePostgisInfo" parameterType="list">
+		delete from post_gis_info
+		where db_id in
+		<foreach collection="list" index="id" separator="," item="ids" open="(" close=")">
+			#{ids}
+		</foreach>
+	</delete>
+
+	<select id="queryPostGISNamesById" parameterType="list" resultType="String">
+		select pgi.data_source_name from post_gis_info pgi
+		where pgi.db_id in
+		<foreach collection="list" index="id" separator="," item="ids" open="(" close=")">
+			#{ids}
+		</foreach>
+	</select>
+
+	<insert id="savePostgisServerInfo" parameterType="postgisServerInfo">
+         INSERT INTO public.postgis_server_relation_info
+         (id, server_id, db_id)
+    	 VALUES (DEFAULT, #{serverId}, #{dbId});
+     </insert>
+
+	<update id="updateTileTaskInfo">
+         update tile_task_info
+         set
+         layer_name = #{newlayer}
+         where layer_name = #{oldlayer}
+     </update>
+
+	<update id="updateDynamicInfo">
+         update dynamic_data_source
+         set
+         layer_name = #{newlayer}
+         where layer_name = #{oldlayer}
+     </update>
+
+	<update id="updateLayerStoreInfo">
+         update layer_store_info
+         set
+         layer_name = #{newlayer}
+         where layer_name = #{oldlayer}
+     </update>
+
+	<update id="updateTileEntityInfo">
+         update tile_task_entity_info
+         set
+         task_name = #{newlayer}
+         where task_name = #{oldlayer}
+     </update>
+
+	<select id="getSeaChartScaleByServerId">
+         select sea_chart_scale from map_feature_info WHERE server_id = #{serverId}
+     </select>
+     
+     <select id="queryLayerNamesByDataType" resultType="String" parameterType="int">
+		select 
+		server_name || ';' || native_bbox ||  ';' || file_url
+		from map_server_info msi
+		left join map_feature_info mfi
+		on msi.server_id = mfi.server_id
+		where msi.server_show = 0 and mfi.data_format = #{dataType}
+		and (mfi.tile_extension != 'osgb' or mfi.tile_extension is null) and server_status = 1
+     </select>
+
+	<select id="queryGroupServerShow" parameterType="list" resultType="Map">
+		select
+		server_id as serverId,
+		server_show as serverShow,
+		is_layer_group as layerGroup
+		from map_server_info
+		where 1 = 1
+		<if test="ids != null and ids.size() > 0">
+			and server_id in
+			<foreach collection="ids" index="id" separator="," item="id" open="(" close=")">
+				#{id}
+			</foreach>
+		</if>
+		union all
+		select
+		msi.server_id as serverId,
+		msi.server_show as serverShow,
+		msi.is_layer_group as layerGroup
+		from map_server_info msi left join layer_group_info lgi
+		on msi.layer_name=lgi.layer_name
+		where 1 = 1
+		<if test="ids != null and ids.size() > 0">
+			and group_id in
+			<foreach collection="ids" index="id" separator="," item="id" open="(" close=")">
+				#{id}
+			</foreach>
+		</if>
+	</select>
+
+	<select id="queryLayerGroupByServerName" parameterType="String" resultType="org.pygisserver.common.ui.entity.LayerGroup">
+			select
+				group_id as LayerGroupId,
+				layer_Name as layerName,
+				ogc_protocal as ogcProtocal,
+				style_name as styleName,
+				min_level as minLevel,
+				max_level as maxlevel
+			from layer_group_info
+			where group_id = (select server_id from map_server_info where server_name = #{serverName})
+     </select>
+
+	<select id="queryLayerBaseInfo" parameterType="requestQueryCondition" resultType="layerBaseInfo">
+		select
+		msi.layer_name as layerName,
+		mfi.resource_crs as resourceSrs,
+		mfi.tile_extension as resourceFormat,
+		mfi.tile_width as tileWidth,
+		mfi.tile_height as tileHeight,
+		msi.file_url as filePath,
+		msi.file_type as fileType,
+		msi.data_type as dataType,
+		msi.description as description,
+		mfi.zoom_level as supportMaxLevel,
+		msi.server_status as status,
+		msi.pulished_proctol as supportProtocal,
+		mfi.resource_bbox as resourceBbox,
+		mfi.resource_crs as resourceSrs,
+		mfi.native_bbox as nativaBbox,
+		mfi.tile_origin_flag as origin,
+		msi.is_layer_group as isLayerGroup,
+		style_info.style_name as styleName
+		from
+		map_server_info msi
+		left join map_feature_info mfi on msi.server_id = mfi.server_id
+		left join server_style_info ssi on ssi.server_id = msi.server_id
+		left join style_info on style_info.id = ssi.style_id
+		where 1 = 1
+		<if test = "serverName != null and serverName != ''">
+			and msi.layer_name = #{serverName}
+		</if>
+		<if test="protocolName != null and protocolName != ''">
+			and msi.pulished_proctol ~* #{protocolName}
+		</if>
+		and msi.is_public = 1
+		and server_show = 0
+	</select>
+
+	<update id="updateStatusAndOverview" parameterType="int" >
+		update map_server_info
+		set server_status = 1,
+		over_view = 1
+		where server_id = #{serverId}
+	</update>
+	
+	<update id="updateRoadCost" parameterType="list">
+		update china_road
+		set
+		rev_cost = 9999999999,
+		cost = 999999999,
+		time_cost = 999999999,
+		time_rev_cost = 999999999
+		where gid in
+		<foreach collection="list" index="id" separator="," item="point" open="(" close=")">
+			(select gid from china_road where 
+			ST_DWithin(geom,ST_Geometryfromtext(#{point}),0.05) 
+			order by ST_Distance(geom,ST_GeometryFromText(#{point}))  limit 1)
+		</foreach>	
+	</update>
+	
+	<update id="restoreRoadCost" parameterType="list">
+		update china_road   
+		set
+		cost = 
+		case 
+		when direction = '3' then  999999999
+		else length::double precision
+		end
+		,
+		rev_cost = 
+		case 
+		when direction = '2' then  999999999
+		else length::double precision
+		end
+		,
+		
+		time_cost = 
+		case 
+		when direction = '2' then 
+		case   
+		when speedclass = '2' then length::double precision / 115   
+		when speedclass = '3' then length::double precision / 95   
+		when speedclass = '4' then length::double precision / 80   
+		when speedclass = '5' then length::double precision / 60   
+		when speedclass = '6' then length::double precision / 40   
+		when speedclass = '7' then length::double precision / 20   
+		when speedclass = '8' then length::double precision / 10   
+		end
+		else 999999999
+		end
+		,
+		
+		time_rev_cost = 
+		case 
+		when direction = '3' then 
+		case   
+		when speedclass = '2' then length::double precision / 115   
+		when speedclass = '3' then length::double precision / 95   
+		when speedclass = '4' then length::double precision / 80   
+		when speedclass = '5' then length::double precision / 60   
+		when speedclass = '6' then length::double precision / 40   
+		when speedclass = '7' then length::double precision / 20   
+		when speedclass = '8' then length::double precision / 10   
+		end  
+		else 999999999   
+		end
+		where gid in
+		<foreach collection="list" index="id" separator="," item="point" open="(" close=")">
+			(select gid from china_road where 
+			ST_DWithin(geom,ST_Geometryfromtext(#{point}),0.05) 
+			order by ST_Distance(geom,ST_GeometryFromText(#{point}))  limit 1)
+		</foreach>	
+	</update>
+
+	<select id="queryVectorLayer" resultType="String">
+	    select (server_name || ';' || file_url || ';' || data_format) from map_server_info
+		, map_feature_info
+		where map_server_info.server_id = map_feature_info.server_id
+		and data_type = 0 and server_status = 1
+	</select>
+
+	<update id="editTransparentColor" >
+		update
+		map_feature_info
+		set input_transparent_color = #{inputTransparentColor},
+		output_transparent_color = #{outputTransparentColor}
+		where
+		server_id = #{serverId}
+	</update>
+</mapper>

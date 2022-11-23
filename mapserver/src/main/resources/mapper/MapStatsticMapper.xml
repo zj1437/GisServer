@@ -1,0 +1,546 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.MapStatsticMapper">
+
+    <resultMap type="serverRequestInfo" id="serverRequestInfo">
+        <id column="id" property="id" />
+        <result column="server_type" property="serverType"/>
+        <result column="server_name" property="serverName"/>
+        <result column="protocol_name" property="protocolName"/>
+        <result column="reponse_time" property="reponseTime"/>
+        <result column="req_start_time" property="requetStartTime"/>
+        <result column="req_end_time" property="requetEndTime"/>
+        <result column="req_ip" property="reqIP"/>
+        <result column="server_id" property="serverId"/>
+    </resultMap>
+
+    <insert id="saveServerRequest" parameterType="list" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO
+        server_request_statistic(id,server_type,server_name,protocol_name,product_name,reponse_time,req_start_time,req_end_time,req_ip,server_id)
+        VALUES
+        <foreach collection="list" separator="," item="entity" index="index">
+            (DEFAULT,#{entity.serverType},#{entity.serverName},#{entity.protocolName},#{entity.productName}
+            ,#{entity.reponseTime},#{entity.requetStartTime},#{entity.requetEndTime},#{entity.reqIP},#{entity.serverId})
+        </foreach>
+    </insert>
+
+    <insert id="saveOrUpdateServerStatistic" parameterType="list">
+        <foreach collection="list" separator=";" item="entity" index="index">
+            insert into server_visit_statistic(id,server_name,max_reponse_time,
+            min_reponse_time,ave_reponse_time,max_concurrent,visit_num,server_id)
+            values
+            (DEFAULT,#{entity.serverName},#{entity.maxReponseTime},#{entity.minReponseTime},
+            #{entity.averageTime},#{entity.maxConcurrent},#{entity.accessNum},#{entity.serverId}) ON conflict(server_id)
+            do update
+            set max_reponse_time = GREATEST(server_visit_statistic.max_reponse_time,#{entity.maxReponseTime}),
+            min_reponse_time = LEAST(server_visit_statistic.min_reponse_time,#{entity.minReponseTime}),
+            ave_reponse_time = ROUND((server_visit_statistic.ave_reponse_time + #{entity.averageTime}) / 2),
+            max_concurrent = GREATEST(server_visit_statistic.max_concurrent,#{entity.maxConcurrent}),
+            visit_num = (server_visit_statistic.visit_num + #{entity.accessNum})
+        </foreach>
+    </insert>
+
+
+    <insert id="saveAbnormalServerInfo" parameterType="abnormalServerInfo">
+        INSERT INTO
+        server_abnormal_statistic(id,server_type,server_name,abnormal_reason,abnormal_time)
+        VALUES(DEFAULT,#{serverType},#{serverName},#{abnormalReason},#{abnormalTime})
+    </insert>
+
+    <insert id="saveOperationLog" parameterType="sysOperationLog">
+        INSERT INTO operation_log(log_id,op_content,operator,req_ip,op_time)
+        VALUES(DEFAULT,#{content},#{operator},#{operatorIP},#{operateTime})
+    </insert>
+
+
+
+
+    <select id = "queryOprationLogCount" resultType = "int" parameterType = "requestQueryCondition">
+        SELECT Count(distinct(log_id)) from operation_log  where 1 = 1
+        <if test = "_parameter != null">
+            <if test = "logContent != null and logContent != ''">
+                and op_content ~* #{logContent}
+            </if>
+            <if test = "userName != null and userName != ''">
+                and operator ~* #{userName}
+            </if>
+            <if test = "startTime != null and startTime != ''">
+                and op_time  between  to_timestamp(#{startTime},'yyyy-MM-dd hh24:mi:ss') and to_timestamp(#{endTime},'yyyy-MM-dd hh24:mi:ss')
+            </if>
+            <if test = "reqIP != null and reqIP != ''">
+                and req_ip ~* #{reqIP}
+            </if>
+        </if>
+    </select>
+
+    <resultMap type="sysOperationLog" id="sysOpLog">
+        <id column="log_id" property="id" />
+        <result column="op_content" property="content"/>
+        <result column="operator" property="operator"/>
+        <result column="req_ip" property="operatorIP"/>
+        <result column="op_time" property="operateTime"/>
+    </resultMap>
+
+    <!-- 获取系统操作日志 -->
+    <select id = "querySysOprationLog" parameterType = "requestQueryCondition" resultMap = "sysOpLog">
+        select log_id,
+        op_content,
+        operator,
+        req_ip,
+        op_time
+        from operation_log
+        where 1 = 1
+        <if test="_parameter != null">
+            <if test="userName != null and userName != ''">
+                and operator ~* #{userName}
+            </if>
+            <if test="logContent != null and logContent != ''">
+                and op_content ~* #{logContent}
+            </if>
+            <if test="reqIP != null and reqIP != ''">
+                and req_ip ~* #{reqIP}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                and op_time  between  to_timestamp(#{startTime},'yyyy-MM-dd hh24:mi:ss') and to_timestamp(#{endTime},'yyyy-MM-dd hh24:mi:ss')
+            </if>
+            <choose>
+                <when test="pageInfo != null">
+                    <choose>
+                        <when test="pageInfo.sidx != null and pageInfo.sidx != ''">
+                            <if test="pageInfo.sidx == 'logLevel'">
+                                order by op_content ${pageInfo.sord}
+                            </if>
+                            <if test="pageInfo.sidx == 'operateTime'">
+                                order by op_time ${pageInfo.sord}
+                            </if>
+                            <if test="pageInfo.sidx == 'operator'">
+                                order by operator ${pageInfo.sord}
+                            </if>
+                        </when>
+                        <otherwise>
+                            order by op_time desc
+                        </otherwise>
+                    </choose>
+                    <if test="pageInfo.pageSize != 0">
+                        LIMIT ${pageInfo.pageSize} offset (${pageInfo.pageNum} - 1) * ${pageInfo.pageSize}
+                    </if>
+                </when>
+                <otherwise>
+                    order by op_time desc
+                </otherwise>
+            </choose>
+        </if>
+    </select>
+
+    <!-- 获取系统操作日志 -->
+    <select id="queryAllSysOprationLog" resultType="sysOperationLog">
+        SELECT
+        log_id AS id,
+        op_content AS content,
+        operator AS operator,
+        req_ip AS operatorIP,
+        op_time AS operateTime
+        from operation_log
+    </select>
+
+    <delete id = "deleteOprationLog" parameterType = "list">
+        delete from operation_log where log_id in
+        <foreach collection = "list" index = "index" item = "id" open = "(" close = ")" separator = ",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="isAccess" parameterType="String" resultType="boolean">
+        select
+        case server_status
+        when 0 then false
+        else true
+        END
+        FROM
+        public.map_server_info
+        WHERE layer_name = #{layer}
+    </select>
+
+    <select id="isPublishedVersion" parameterType="String" resultType="boolean">
+        select
+        count(0) > 0
+        from map_version_info mvi
+        left join map_server_info msi
+        on mvi.server_id = msi.server_id
+        where
+        mvi.version ~ #{version}
+        and mvi.name = #{serviceName}
+        and msi.server_name = #{layer}
+    </select>
+
+    <select id="queryServerVisitNum" parameterType="map" resultType="serverStatisticinfo">
+        select
+	        server_name as serverName,
+	        server_type as serverType,
+	        count(id) as accessNum,
+	        serverinfo.description as description,
+	        serverinfo.status as serverStatus
+	        from server_request_statistic srs
+	        left join
+	        (SELECT
+	        server_name as serverName,
+	        description as description,
+	        server_status as status
+	        FROM map_server_info
+	        union
+	        SELECT server_name as serverName,
+	        description as description,
+	        status as status
+	        FROM
+	        model_server_info) serverinfo
+	        on srs.server_name = serverinfo.serverName
+		where srs.req_start_time between #{startTime} and #{endTime}
+		group by server_name,server_type,description,status
+    </select>
+    
+    <select id="queryServerPerformance" parameterType="map" resultType="map">
+		<choose>
+		    <when test="filed =='ogc'">
+                select
+                protocol_name as serverName,
+                count(protocol_name) as countNum
+                from server_request_statistic
+                where 1=1
+                <if test="startTime != null and endTime != null">
+                    req_start_time between #{startTime} and #{endTime}
+                </if>
+                group by protocol_name
+                order by countNum ${sort}
+            </when>
+		    <otherwise>
+                <choose>
+                    <when test="startTime == null and endTime == null">
+                        select
+                        server_name as serverName
+                        <if test="filed == 'visitCount'">
+                            , visit_num as countNum
+                        </if>
+                        <if test="filed == 'avgResponse'">
+                            , ave_reponse_time as countNum
+                        </if>
+                        <if test="filed == 'concurrentCount'">
+                            , max_concurrent as countNum
+                        </if>
+                        from
+                        server_visit_statistic
+                        order by countNum ${sort}
+                    </when>
+                    <otherwise>
+                        <choose>
+                            <when test="filed =='concurrentCount'">
+                                select
+                                server_name as serverName,
+                                max(count) as countNum
+                                from
+                                (select
+                                server_name,
+                                count(to_char(req_start_time,'YYYY-MM-DD hh:MI:SS')) as count
+                                from server_request_statistic
+                                where to_char(req_start_time,'YYYY-MM-DD hh:MI:SS') = to_char(req_end_time,'YYYY-MM-DD hh:MI:SS')
+                                and req_start_time between #{startTime} and #{endTime}
+                                group by server_name,to_char(req_start_time,'YYYY-MM-DD hh:MI:SS')
+                                ) t
+                                group by server_name
+                                order by countNum ${sort}
+                            </when>
+                            <otherwise>
+                                select
+                                server_name as serverName
+                                <if test="filed == 'visitCount'">
+                                    , count(id) as countNum
+                                </if>
+                                <if test="filed == 'avgResponse'">
+                                    , round(avg(reponse_time)) as countNum
+                                </if>
+                                from server_request_statistic
+                                where req_start_time between #{startTime} and #{endTime}
+                                group by server_name,server_type
+                                order by countNum ${sort}
+                            </otherwise>
+                        </choose>
+                    </otherwise>
+                </choose>
+            </otherwise>
+		</choose>
+        limit 5
+    </select>
+
+    <select id="queryServerReqInfo" parameterType="map" resultType="serverRequestInfo">
+        select
+			server_name as serverName,
+			req_start_time as requetStartTime,
+			req_end_time as requetEndTime
+			from server_request_statistic
+			where req_start_time between #{startTime} and #{endTime}
+    </select>
+
+    <select id="queryAbnormalServerInfo" parameterType="map" resultType="abnormalServerInfo">
+        SELECT
+        id AS id,
+        server_type as serverType,
+        server_name as serverName,
+        abnormal_reason as abnormalReason,
+        abnormal_time as abnormalTime
+        from server_abnormal_statistic
+        where 1=1
+        <if test="startTime != null and endTime != null">
+            and abnormal_time between #{startTime} and #{endTime}
+        </if>
+    </select>
+
+
+    <insert id="saveSysResourceInfo" parameterType="sysResourceRecord">
+        INSERT INTO sys_resource_info(id,cpu_rate,memory_total_size,memory_use_size,memory_use_rate,record_time)
+        VALUES(DEFAULT,#{cpuRate},#{totalSize},#{useSize},#{useRate},#{recordTime})
+    </insert>
+
+    <select id="querySysResource" resultType="sysResourceRecord">
+        SELECT id AS id,
+	        cpu_rate AS cpuRate,
+	        memory_total_size AS totalSize,
+	        memory_use_size AS useSize,
+	        memory_use_rate AS useRate,
+	        record_time AS recordTime
+        FROM sys_resource_info
+        where
+        record_time between #{startTime} and #{endTime}
+    </select>
+
+    <select id="serverStatusStatstic" resultType="serverStatisticinfo">
+       select
+		serverStatus,
+		count(t.id) as accessNum
+		from (
+		SELECT
+		msi.server_status as serverStatus,
+		server_id as id
+		FROM map_server_info msi
+		union all
+		SELECT
+		status as serverStatus,
+		id as id
+		from model_server_info
+		) as t
+		group by t.serverStatus
+    </select>
+
+    <select id="serverTypeStatstic" resultType="serverStatisticinfo">
+        SELECT
+         srs.protocol_name as ogcName,
+	     count(id) as accessNum
+	     FROM server_request_statistic srs
+	     where
+	     req_start_time between #{startTime} and #{endTime}
+	     group by protocol_name
+    </select>
+
+    <!-- 批量删除当前服务的统计数据 -->
+    <delete id="deleteServerReqInfoByServerIds" parameterType="List">
+        delete from server_request_statistic
+        where server_name in
+        (select server_name from map_server_info where server_id in
+        <foreach collection="list" index="index" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        )
+    </delete>
+
+
+    <!-- 删除异常信息记录 -->
+    <delete id="deleteAbnormalInfo" parameterType="list">
+        delete from server_abnormal_statistic
+        where server_name in
+        (select server_name from map_server_info where server_id in
+        <foreach collection="list" index="index" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+        )
+    </delete>
+
+
+    <delete id="deleteServerReqInfoByName" parameterType="list">
+        delete from server_request_statistic
+        where server_name in
+        <foreach collection="list" index="index" item="name" open="(" close=")" separator=",">
+            #{name}
+        </foreach>
+        and exists
+        (select server_name from map_server_info
+        where
+        server_name in
+        <foreach collection="list" index="index" item="name" open="(" close=")" separator=",">
+            #{name}
+        </foreach>
+        )
+    </delete>
+
+
+    <select id="isSupportTheFormat" resultType="boolean">
+        SELECT
+        case count(0)
+        when 0 then false
+        else true
+        end
+        FROM map_version_info mvi
+        LEFT JOIN map_server_info msi
+        on msi.server_id = mvi.server_id
+        where msi.layer_name = #{layer}
+        and mvi.name = #{type}
+        and mvi.tiled_format ~ #{format}
+    </select>
+
+    <select id="queryAllLayers" resultType="String">
+        SELECT
+        server_name
+        FROM server_request_statistic
+        group by server_name
+    </select>
+
+    <delete id="deleteServerStatstic" parameterType="list">
+        delete from server_visit_statistic
+        where server_name in
+        <foreach collection="list" index="index" item="name" open="(" close=")" separator=",">
+            #{name}
+        </foreach>
+    </delete>
+
+    <insert id="saveSystemLog" parameterType="systemLogEntity">
+        insert into system_log(log_id,sys_log_level,sys_log_content,sys_log_src,sys_log_user,sys_log_src_ip,sys_log_time)
+        values(DEFAULT,#{logLevel},#{logContent},#{logSrc},#{sysLogUser},#{logSrcIP},#{logHappenedTime})
+    </insert>
+
+    <delete id = "deleteSystemLog" parameterType = "list">
+        delete from system_log where log_id in
+        <foreach collection = "list" index = "index" item = "id" open = "(" close = ")" separator = ",">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id = "querySystemLogCount" resultType = "int" parameterType = "requestQueryCondition">
+        select count(distinct(sl.log_id)) from system_log sl
+        where 1 = 1
+        <if test = "_parameter != null">
+            <if test = "userName != null and userName != ''">
+                and sl.sys_log_user ~* #{userName}
+            </if>
+            <if test = "logContent != null and logContent != ''">
+                and sl.sys_log_content ~* #{logContent}
+            </if>
+            <if test = "logLevel != -1">
+                and sl.sys_log_level = #{logLevel}
+            </if>
+            <if test = "startTime != null and startTime != ''">
+                and sl.sys_log_time  between  to_timestamp(#{startTime},'yyyy-MM-dd hh24:mi:ss') and to_timestamp(#{endTime},'yyyy-MM-dd hh24:mi:ss')
+            </if>
+            <if test="reqIP !=null and reqIP !=''">
+                and sys_log_src_ip = #{reqIP}
+            </if>
+        </if>
+    </select>
+
+    <resultMap type="systemLogEntity" id="sysLog">
+        <id column="log_id" property="logId" />
+        <result column="sys_log_level" property="logLevel"/>
+        <result column="sys_log_content" property="logContent"/>
+        <result column="sys_log_src" property="logSrc"/>
+        <result column="sys_log_user" property="sysLogUser"/>
+        <result column="sys_log_src_ip" property="logSrcIP"/>
+        <result column="sys_log_time" property="logHappenedTime"/>
+    </resultMap>
+
+    <select id = "querySystemLogs" parameterType = "requestQueryCondition" resultMap = "sysLog">
+        select log_id,
+        sys_log_level,
+        sys_log_content,
+        sys_log_src,
+        sys_log_user,
+        sys_log_src_ip,
+        sys_log_time
+        from system_log
+        where 1 = 1
+        <if test = "_parameter != null">
+            <if test = "reqIP != null and reqIP != ''">
+                and sys_log_src_ip ~* #{reqIP}
+            </if>
+            <if test = "logLevel != -1">
+                and sys_log_level = #{logLevel}
+            </if>
+            <if test = "userName != null and userName != ''">
+                and sys_log_user ~* #{userName}
+            </if>
+            <if test = "logContent != null and logContent != ''">
+                and sys_log_content ~* #{logContent}
+            </if>
+            <if test = "startTime != null and startTime != ''">
+                and sys_log_time  between to_timestamp(#{startTime},'yyyy-MM-dd hh24:mi:ss') and to_timestamp(#{endTime},'yyyy-MM-dd hh24:mi:ss')
+            </if>
+            <choose>
+                <when test = "pageInfo != null">
+                    <choose>
+                        <when test = "pageInfo.sidx != null and pageInfo.sidx != ''">
+                            <if test="pageInfo.sidx == 'logContent'">
+                                order by sys_log_content ${pageInfo.sord}
+                            </if>
+                            <if test="pageInfo.sidx == 'logHappenedTime'">
+                                order by sys_log_time ${pageInfo.sord}
+                            </if>
+                            <if test="pageInfo.sidx == 'sysLogUser'">
+                                order by sys_log_user ${pageInfo.sord}
+                            </if>
+                        </when>
+                        <otherwise>
+                            order by sys_log_time desc
+                        </otherwise>
+                    </choose>
+                    <if test="pageInfo.pageSize != 0">
+                        LIMIT ${pageInfo.pageSize} offset (${pageInfo.pageNum} - 1) * ${pageInfo.pageSize}
+                    </if>
+                </when>
+                <otherwise>
+                    order by sys_log_time desc
+                </otherwise>
+            </choose>
+        </if>
+    </select>
+
+    <update id="updateRequestServerName">
+        update server_request_statistic
+        set server_name = #{newServerName}
+        where server_id = #{serverId}
+    </update>
+
+    <update id="updateVisitServerName">
+        update server_visit_statistic
+        set server_name = #{newServerName}
+        where server_id = #{serverId}
+    </update>
+
+    <select id="queryServerRequestInfo" resultMap="serverRequestInfo">
+        select
+        id,
+        server_type,
+        server_name,
+        protocol_name,
+        reponse_time,
+        req_start_time,
+        req_end_time,
+        req_ip,
+        server_id
+        from
+        server_request_statistic
+        where
+        <choose>
+            <when test = "saveLastEndTime == null">
+                req_start_time > #{saveEndTime}
+            </when>
+            <otherwise>
+                req_start_time between #{saveLastEndTime} and #{saveEndTime}
+            </otherwise>
+        </choose>
+    </select>
+</mapper>

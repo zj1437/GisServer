@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="org.pygisserver.render.dao.RenderMapper">
+     <select id="queryLayerBaseInfo" parameterType="requestQueryCondition" resultType="layerBaseInfo">
+        select
+        msi.layer_name as layerName,
+        mfi.resource_crs as resourceSrs,
+        mfi.tile_extension as resourceFormat,
+        mfi.tile_width as tileWidth,
+        mfi.tile_height as tileHeight,
+        msi.file_url as filePath,
+        msi.file_type as fileType,
+        msi.data_type as dataType,
+        mfi.zoom_level as supportMaxLevel,
+        msi.server_status as status,
+        msi.pulished_proctol as supportProtocal,
+        mfi.resource_bbox as resourceBbox,
+        mfi.resource_crs as resourceSrs,
+        mfi.native_bbox as nativaBbox,
+        mfi.tile_origin_flag as origin,
+        msi.is_layer_group as isLayerGroup,
+        style_info.style_name as styleName
+        from
+        map_server_info msi
+        left join map_feature_info mfi on msi.server_id = mfi.server_id
+        left join server_style_info ssi on ssi.server_id = msi.server_id
+        left join style_info on style_info.id = ssi.style_id
+        where 1 = 1
+        <if test = "serverName != null and serverName != ''">
+	        and msi.layer_name = #{serverName}
+        </if>
+        <if test="protocolName != null and protocolName != ''">
+		    and msi.pulished_proctol ~* #{protocolName}
+        </if>
+	    and msi.is_public = 1
+    </select>
+
+     <select id="queryLayerGroupsByServerName" parameterType="String" resultType="org.pygisserver.common.ui.entity.LayerGroup" >
+        select 
+        group_id as LayerGroupId,
+        layer_group_info.layer_Name as layerName,
+        style_name as styleName,
+        remote_url as remoteUrl,
+        server_type as serverType,
+        ogc_protocal as ogcProtocal,
+        min_level as minLevel,
+        max_level as maxlevel 
+        from 
+        layer_group_info,
+        map_server_info
+        where map_server_info.server_id = layer_group_info.group_id
+        and map_server_info.layer_name = #{serverName}
+        order by id
+    </select>
+    
+      <select id="querySysStylePath" resultType="String">
+         select style_path from system_config_info
+     </select>
+	
+</mapper>
+

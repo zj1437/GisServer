@@ -1,0 +1,88 @@
+#服务端口
+#server:
+#  port: 8088
+#  servlet:
+#    context-path: /pygisserver
+#    session:
+#      tracking-modes: cookie
+#dubbo消费者
+dubbo:
+  application:
+    name: mapserver
+  registry:
+    protocol: zookeeper
+    address: zookeeper://localhost:2181
+  protocol:
+    name: dubbo
+    port: 20882
+  consumer:
+    timeout: 30000
+    retries: 3
+    check: false
+#日志的记录，使用logback
+logging:
+  config: classpath:config/logback-spring.xml
+  level:
+    org.pygisserver.web.dao: debug
+
+spring:
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5436/py_data  #切图数据服务
+    username: postgres
+    password: pyserver2022
+    druid:
+      initial-size: 30
+      max-active: 500
+      #获取连接超时时间
+      max-wait: 60000
+      #监测需要关闭的空闲链接时间间隔
+      time-between-eviction-runs-millis: 60000
+      #空闲链接最小生存时间
+      min-evictable-idle-time-millis: 60000
+      validation-query: SELECT 1
+      test-on-borrow: false
+      test-while-idle: true
+      test-on-return: false
+  #          filters: stat,wall,log4j
+  #设置redis的基础配置
+  redis:
+    database: 1
+    host: localhost
+    port: 6379
+    timeout: 10000
+    jedis:
+      pool:
+        max-idle: 10
+        max-active: 500
+        max-wait: 10000
+  #应用名称
+  application:
+    name: mapserver
+  web:
+    resources:
+      add-mappings: false
+  mvc:
+    throw-exception-if-no-handler-found: true
+    #文件上传配置
+  servlet:
+    multipart:
+      maxFileSize: 1024MB
+      maxRequestSize: 1024MB
+#mybatis的配置
+mybatis:
+  #  config-location: classpath:mybatis-config.xml
+  mapper-locations: classpath*:mapper/*.xml
+  type-aliases-package: org.pygisserver.web.entity,org.pygisserver.common
+  configuration:
+    cache-enabled: true
+#配置s57动态库
+seachart:
+  location:
+    data: classpath:s57data
+    library: classpath:native/s57
+#设置共享路径(分布式环境下可以放开)
+#freexserver:
+#  data:
+#    location: E://FreeServer//FreeXServer//FreeXServer//mapserver//target//classes//data  #可以设置共享路径

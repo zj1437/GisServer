@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.UserMapper">
+     
+     <resultMap type="userInfo" id="userInfoMap">
+         <id column="user_id"  property="userId"/>
+         <result column="user_name"  property="userName"/>
+         <result column="user_pass"  property="passWord"/>
+         <result column="phone_num"  property="phone"/>
+         <result column="email"  property="email"/>
+         <result column="description"  property="description"/>
+         <result column="gen_time"  property="genTime"/>
+         <result column="login_time"  property="loginTime"/>
+         <result column="last_login_time"  property="lastLoginTime"/>
+         <result column="is_system"  property="isSysConfig"/>
+         <result column="is_lock"  property="isLock"/>
+         <result column="use_memory" property="freeMemorySize"/>
+         <collection property="userPermisson" column="user_id" ofType="permissionInfo" select="org.pygisserver.web.dao.PermissionMapper.queryUserPermissionByuserId">
+         </collection>
+         <collection property="roles" column="user_id" ofType="roleInfo" select="org.pygisserver.web.dao.RoleMapper.queryRoleInfoById">
+         </collection>
+     </resultMap>
+     
+     <resultMap type="userInfo" id="userMap">
+         <id column="user_id"  property="userId"/>
+         <result column="user_name"  property="userName"/>
+         <result column="user_pass"  property="passWord"/>
+         <result column="phone_num"  property="phone"/>
+         <result column="email"  property="email"/>
+         <result column="description"  property="description"/>
+         <result column="gen_time"  property="genTime"/>
+         <result column="login_time"  property="loginTime"/>
+         <result column="last_login_time"  property="lastLoginTime"/>
+         <result column="is_system"  property="isSysConfig"/>
+         <result column="is_lock"  property="isLock"/>
+         <result column="use_memory" property="freeMemorySize"/>
+         <collection property="roles"  ofType="roleInfo">
+             <id column="role_id" property="roleId"/>
+	         <result column="role_name" property="roleName"/>
+	         <result column="role_creator" property="roleCreator"/>
+	         <result column="gen_time" property="genTime"/>
+	         <result column="update_time" property="updateTime"/>
+	         <result column="desciption" property="description"/>
+	         <result column="is_system" property="isSystem"/>
+         </collection>
+     </resultMap>
+     
+     <select id="queryExistsUserName" resultType="String">
+         SELECT user_name FROM user_info
+     </select>
+     
+    <select id="queryUserInfo" parameterType="String" resultMap="userInfoMap">
+         SELECT 
+	         userInfo.user_id, 
+	         user_name, 
+	         user_pass, 
+	         phone_num, 
+	         email,
+	         description,
+	         gen_time, 
+	         login_time,
+	         last_login_time, 
+	         is_system, 
+	         is_lock,
+	         use_memory
+		FROM public.user_info userInfo
+		where user_name = #{userName}
+     </select>
+     
+      <select id="queryUserInfoByUserId" parameterType="int" resultMap="userInfoMap">
+         SELECT 
+	         user_id, 
+	         user_name, 
+	         user_pass, 
+	         phone_num, 
+	         email,
+	         description,
+	         gen_time, 
+	         login_time,
+	         last_login_time, 
+	         is_system, 
+	         is_lock,
+	         use_memory
+		FROM public.user_info userInfo
+		where user_id = #{userId}
+     </select>
+     
+     <!-- 删除用户 -->
+     <delete id="deleteUserInfo" parameterType="list">
+         DELETE from user_info 
+         WHERE user_id in
+         <foreach collection="list" item="id" separator=","  open="(" close=")">
+			#{id}
+         </foreach>
+     </delete>
+     
+     <!-- 删除角色信息表 -->
+     <delete id="deleteUserRoleByUserId" parameterType="int">
+         DELETE FROM public.user_role_info where
+         user_id = #{userId}
+     </delete>
+     
+     <!-- 删除角色信息表 -->
+     <delete id="deleteUserRoleByUserIds" parameterType="List">
+         DELETE FROM public.user_role_info where
+         user_id in
+         <foreach collection="list" index="id" item="userId" open="(" close=")" separator=",">
+               #{userId}
+           </foreach>
+     </delete>
+     
+     <delete id="deleteUserRoleByRoleId" parameterType="List">
+           DELETE FROM public.user_role_info where
+           role_id in
+           <foreach collection="list" index="id" item="roleId" open="(" close=")" separator=",">
+               #{roleId}
+           </foreach>
+     </delete>
+     
+     <!-- 新增用户 -->
+     <insert id="addUserInfo" parameterType="userInfo" useGeneratedKeys="true" keyProperty="userId">
+         INSERT INTO  public.user_info
+         (user_id,user_name, user_pass, phone_num, email, description, gen_time, login_time,last_login_time, is_system, is_lock,use_memory)
+		  VALUES (DEFAULT, #{userName}, #{passWord}, #{phone}, #{email}, #{description},#{genTime}, #{loginTime}, #{lastLoginTime}, #{isSysConfig}, #{isLock}, #{freeMemorySize});
+     </insert>
+     
+     <update id="editUserInfo" parameterType="userInfo">
+         UPDATE public.user_info
+		 SET 
+		   user_name = #{userName}
+		   <if test="phone != null and phone != ''">
+		      ,phone_num = #{phone}
+		   </if>
+		   <if test="email != null and email != ''">
+		      ,email = #{email}
+		   </if>
+		   <if test="description != null and description != ''">
+		      ,description = #{description}
+		   </if>
+		    ,use_memory = #{freeMemorySize}
+		 WHERE user_id = #{userId};
+     </update>
+     
+     <!-- 锁定用户信息 -->
+     <update id="lockUser" parameterType="String">
+        UPDATE public.user_info
+		   SET is_lock = 0
+		 WHERE user_name = #{userName};
+     </update>
+     
+     <update id="unLockUser" parameterType="String">
+        UPDATE public.user_info
+		   SET is_lock = 1
+		 WHERE user_name = #{userName};
+     </update>
+     
+     <select id="queryUserStatus" resultType="int">
+         SELECT is_lock from user_info WHERE user_name = #{userName}
+     </select>
+     
+     <!-- 存储用户角色信息 -->
+     <insert id="saveUserRoleInfo" parameterType="list">
+          INSERT INTO  public.user_role_info
+         (id,user_id, role_id)
+		  VALUES 
+		  <foreach collection="list" item="userRole" separator=",">
+		      (DEFAULT, #{userRole.userId}, #{userRole.roleId})
+		  </foreach>
+     </insert>
+     
+     <select id="queryUserInfoList" resultMap="userMap">
+          SELECT
+             ui.user_id, 
+	         ui.user_name, 
+	         ui.user_pass, 
+	         ui.phone_num, 
+	         ui.email,
+	         ui.description,
+	         ui.gen_time, 
+	         ui.login_time,
+	         ui.last_login_time, 
+	         ui.is_system , 
+	         ui.is_lock,
+	         ui.use_memory,
+	         ri.role_id,
+	         ri.role_name,
+	         ri.role_creator,
+	         ri.gen_time,
+	         ri.update_time,
+	         ri.desciption,
+	         ri.is_system
+	     FROM public.user_info ui
+	     Left join user_role_info uri
+	     on ui.user_id = uri.user_id
+	     LEFT JOIN role_info ri
+	     on uri.role_id = ri.role_id
+	     order by user_id
+     </select>
+     
+     <select id="queryUserInfoByUserName" resultType="userInfo" parameterType="String">
+         SELECT
+             user_id AS userId, 
+	         user_name AS userName, 
+	         user_pass AS passWord, 
+	         phone_num AS phone, 
+	         email AS email, 
+	         description as description,
+	         gen_time AS genTime, 
+	         login_time AS loginTime,
+	         last_login_time AS lastLoginTime,
+	         is_system AS isSysConfig, 
+	         is_lock AS isLock,
+	         use_memory as freeMemorySize
+	     FROM public.user_info
+	     where user_name ~ CONCAT('^',#{param})
+     </select>
+     
+     <update id="updateUserPass">
+         UPDATE user_info
+         SET
+         user_pass = #{pass}
+         WHERE user_name = #{userName}
+     </update>
+     
+     <update id="updateUsersPass">
+         UPDATE user_info
+         SET
+         user_pass = #{pass}
+         WHERE user_name in
+         <foreach collection="list" item="userName" index="id" open="(" close=")" separator=",">
+             #{userName}
+         </foreach>
+     </update>
+     
+     <select id="queryUserPassword" parameterType="String" resultType="String">
+         SELECT user_pass FROM user_info WHERE user_name = #{userName}
+     </select>
+     
+     <insert id="saveErrorLoginInfo" parameterType="loginErrorInfo">
+         INSERT INTO public.error_login (id,user_name,login_time) VALUES (DEFAULT,#{userName},#{loginTime})
+     </insert>
+     
+     <select id="queryUserLoginCount" parameterType="map" resultType="int">
+         SELECT count(id) from error_login where user_name = #{userName}
+         and login_time between #{startTime} and #{endTime}
+     </select>
+     
+     <delete id="deleteErrorLoginInfo" parameterType="Map">
+         delete from error_login
+         where user_name = #{userName}
+         and login_time between #{startTime} and #{endTime}
+     </delete>
+     
+     <select id="queryUserNameByIds" parameterType="list" resultType="String">
+         Select
+         user_name
+         from user_info
+         where user_id in
+         <foreach collection="list" index="index" item="id" open="(" close=")" separator=",">
+             #{id}
+         </foreach>
+     </select>
+     
+     <select id="queryServerIdsByUserNames" parameterType="list" resultType="int">
+         Select
+         server_id
+         from 
+         map_server_info
+         where data_type != 7 and publishor in
+         <foreach collection="list" index="index" item="userName" open="(" close=")" separator=",">
+             #{userName}
+         </foreach>
+     </select>
+     
+     <select id="querySystemUser" resultType="String">
+         select user_name
+         from user_info
+         where 
+         is_system = 1
+     </select>
+</mapper>

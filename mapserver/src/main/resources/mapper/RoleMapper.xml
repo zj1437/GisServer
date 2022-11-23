@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.RoleMapper">
+     
+     <resultMap type="roleInfo" id="roleInfoMap">
+         <id  column="role_id" property="roleId"/>
+         <result column="role_name"  property="roleName"/>
+         <result column="role_creator"  property="roleCreator"/>
+         <result column="gen_time"  property="genTime"/>
+         <result column="update_time"  property="updateTime"/>
+         <result column="desciption"  property="description"/>
+         <result column="is_system"  property="isSystem"/>
+     </resultMap>
+     
+      <resultMap type="roleInfo" id="roleMap">
+         <id  column="role_id" property="roleId"/>
+         <result column="role_name"  property="roleName"/>
+         <result column="role_creator"  property="roleCreator"/>
+         <result column="gen_time"  property="genTime"/>
+         <result column="update_time"  property="updateTime"/>
+         <result column="desciption"  property="description"/>
+         <result column="is_system"  property="isSystem"/>
+         <collection property="userInfos" ofType="userInfo">
+             <id column="user_id"  property="userId"/>
+	         <result column="user_name"  property="userName"/>
+	         <result column="user_pass"  property="passWord"/>
+	         <result column="phone_num"  property="phone"/>
+	         <result column="email"  property="email"/>
+	         <result column="description"  property="description"/>
+	         <result column="gen_time"  property="genTime"/>
+	         <result column="login_time"  property="loginTime"/>
+	         <result column="last_login_time"  property="lastLoginTime"/>
+	         <result column="is_system"  property="isSysConfig"/>
+	         <result column="is_lock"  property="isLock"/>
+         </collection>
+         <collection property="permissions" ofType="permissionInfo">
+             <id column="id" property="id" />
+         <result column="auth_id"  property="authId"/>
+         <result column="parent_auth_id"  property="pAuthId"/>
+         <result column="auth_name"  property="authName"/>
+         <result column="auth_description"  property="description"/>
+         <result column="is_checked"  property="isCheck"/>
+         </collection>
+     </resultMap>
+     
+     
+     <!-- 根据用户id查询角色信息 -->
+     <select id="queryRoleInfoById" parameterType="int" resultMap="roleInfoMap">
+        SELECT 
+	        distinct(ri.role_id),
+	        ri.role_name,
+	        ri.role_creator,
+	        ri.gen_time,
+	        ri.update_time,
+	        ri.desciption,
+	        ri.is_system
+        FROM role_info ri,
+        user_role_info uri
+        where ri.role_id = uri.role_id
+        AND uri.user_id = #{userId}
+     </select>
+     
+     <!-- 查询当前角色列表 -->
+     <select id="queryRoleInfo" resultMap="roleMap">
+         SELECT 
+	        ri.role_id,
+	        ri.role_name,
+	        ri.role_creator,
+	        ri.gen_time,
+	        ri.update_time,
+	        ri.desciption,
+	        ri.is_system,
+	        ui.user_id, 
+	        ui.user_name, 
+	        ui.user_pass, 
+	        ui.phone_num, 
+	        ui.email,
+	        ui.description,
+	        ui.gen_time, 
+	        ui.login_time,
+	        ui.last_login_time, 
+	        ui.is_system, 
+	        ui.is_lock,
+	        auth.id,
+	        auth.auth_id,
+	        auth.parent_auth_id,
+	        auth.auth_name,
+	        auth.auth_description, 
+	        auth.is_checked
+        FROM role_info ri
+        left join user_role_info uri
+        on ri.role_id = uri.role_id
+        left join user_info ui
+        on uri.user_id = ui.user_id
+        left join role_auth_relation rar
+        on rar.role_id = ri.role_id
+        left join auth_info auth
+        on auth.auth_id = rar.auth_id
+        order by user_id
+     </select>
+     
+     <!-- 保存角色信息 -->
+     <insert id="addRoleInfo" parameterType="roleInfo" useGeneratedKeys="true" keyProperty="roleId">
+          INSERT INTO role_info(role_id,role_name,role_creator,gen_time,update_time,desciption,is_system)
+          VALUES (DEFAULT,#{roleName},#{roleCreator},#{genTime},#{updateTime},#{description},#{isSystem})
+     </insert>
+     
+     <!-- 保存角色权限信息 -->
+     <insert id="saveRoleAuthinfo" parameterType="list">
+          INSERT INTO role_auth_relation(id,role_id,auth_id,auth_status)
+          VALUES
+          <foreach collection="list" item="roleAuth" index="id" separator=",">
+              (DEFAULT,#{roleAuth.roleId},#{roleAuth.authId},#{roleAuth.authStatus})
+          </foreach>
+     </insert>
+     
+     <!-- 删除对应的角色信息 -->
+     <delete id="deleteRoleInfos" parameterType="list">
+         delete from role_info
+         where 
+         role_id in
+         <foreach collection="list" item="id" index="index" open="(" close=")" separator=",">
+             #{id}
+         </foreach>
+     </delete>
+     
+     <update id="editRoleInfo" parameterType="roleInfo">
+         update role_info
+         SET
+         update_time = #{updateTime}
+         <if test="roleName != null and roleName != ''">
+             ,role_name = #{roleName}
+         </if>
+         <if test="description != null and description != ''">
+             ,desciption = #{description}
+         </if>
+         where role_id = #{roleId}
+     </update>
+     
+     <delete id="deleteRolePermission" parameterType="list">
+         DELETE FROM role_auth_relation
+         where 
+         role_id in
+         <foreach collection="list" item="roleId" index="id" open="(" close=")" separator=",">
+              #{roleId}
+         </foreach>
+     </delete>
+     
+     <select id="queryExistsRoleName" resultType="String">
+         SELECT role_name FROM role_info
+     </select>
+     
+     <select id="queryRoleNum" resultType="int">
+          SELECT count(0) from role_info
+     </select>
+</mapper>

@@ -1,0 +1,1 @@
+alter table tile_task_entity_info alter column support_format type varchar(50);

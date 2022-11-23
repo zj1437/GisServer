@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.StyleInfoMapper">
+
+    <resultMap type="dataServerEntity" id="dataServerEntity">
+        <id column="server_id" property="serverId" />
+        <result column="server_name" property="serverName"/>
+        <result column="layer_name" property="layerName"/>
+        <result column="pulished_proctol" property="publisedProctol"/>
+        <association property="featureInfo" javaType="org.pygisserver.web.entity.FeatureInfo">
+            <id column="feature_id" property="featureId"/>
+            <result column="resource_crs" property="resourceSrs"/>
+            <result column="native_crs" property="nativeSrs"/>
+            <result column="native_bbox" property="nativeLatLon"/>
+            <result column="resource_bbox" property="resourceBbox"/>
+            <result column="zoom_level" property="zoomLevel"/>
+            <result column="data_format" property="dataType"/>
+        </association>
+    </resultMap>
+     <select id="queryStyleInfoCount" parameterType="requestQueryCondition" resultType="int">
+       select count(id)
+       from 
+       style_info
+       where 
+       1=1
+       <if test="styleType != null and styleType != ''">
+          and type_id = #{styleType}
+       </if>
+        <if test="styleName != null and styleName != ''">
+          and style_name ~ #{styleName}
+       </if>
+     </select>
+     
+      
+      <insert id="saveStyleInfo" parameterType="styleInfo">
+         INSERT INTO style_info
+         (id,style_id,style_name,file_name,url,type_id,is_color,is_default,upload_time,upload_person)
+         VALUES(default,#{styleId},#{sldName},#{fileName},#{url},#{typeId},#{isColor},#{isDefault},#{uploadTime},#{uploader})
+     </insert>
+     
+     <select id="queryStyleInfoById" parameterType="String" resultType="styleInfo">
+         select
+			 style_info.id as id,
+			 style_info.style_id as styleId,
+			 style_name as sldName,
+			 file_name as fileName,
+			 url as url,
+			 type_id as typeId,
+			 is_color as isColor,
+			 is_default as isDefault,
+			 upload_time as uploadTime,
+			 upload_person as uploader
+			 from  style_info where style_id = #{styleId}
+     </select>
+     
+     <select id="queryStyleInfo" parameterType="requestQueryCondition" resultType="styleInfo">
+         select
+			 style_info.id as id,
+			 style_info.style_id as styleId,
+			 style_name as sldName,
+			 file_name as fileName,
+			 url as url,
+			 type_id as typeId,
+			 is_color as isColor,
+			 is_default as isDefault,
+			 upload_time as uploadTime,
+			 upload_person as uploader,
+			 style_map.servername as layerName
+			 from 
+			 style_info
+			 left join (
+			    select style_id as styleid,string_agg(map_server_info.server_name,',') as servername
+			    from server_style_info
+			    left join map_server_info
+			    on map_server_info.server_id = server_style_info.server_id
+			    group by server_style_info.style_id
+			 ) as style_map
+			 on style_map.styleid = style_info.id
+         where 1=1
+         <if test="styleType != null and styleType != ''">
+             <choose>
+                 <when test="styleType == 2">
+                     and type_id in (1,#{styleType})
+                 </when>
+                 <otherwise>
+                     and type_id in (#{styleType})
+                 </otherwise>
+             </choose>
+        </if>
+        <if test="styleName != null and styleName != ''">
+          	and style_name ~ #{styleName}
+        </if>
+        <choose>
+           <when test="pageInfo != null">
+               <choose>
+                   <when test="pageInfo.sord != null and pageInfo.sord != ''">
+                        order by style_name ${pageInfo.sord} 
+                   </when>
+                   <otherwise>
+                       order by upload_time desc
+                   </otherwise>
+               </choose>
+               <if test="pageInfo.pageSize != 0">
+                   LIMIT #{pageInfo.pageSize} offset (${pageInfo.pageNum} - 1)*${pageInfo.pageSize}
+               </if>
+           </when>
+           <otherwise>
+               order by upload_time desc
+           </otherwise>
+        </choose>
+     </select>
+     
+     <select id="queryCurrentSldName" resultType="String">
+         select style_name from style_info
+     </select>
+     
+      <insert id="saveRasterColor" parameterType="rasterColorMap">
+         INSERT INTO color_map(color_map_id,color_map_name,color_map_url)
+         VALUES(DEFAULT,#{colorName},#{colorUrl})
+     </insert>
+     
+     <select id="queryMaxStyleIdOfTypeId" resultType="Map">
+         select 
+			type_id,
+			replace(max(style_id),substring(max(style_id) from '\d+$'),cast (max(cast(substring (style_id from '\d+$') as integer)) as text)) as id
+			from style_info
+		group by type_id
+     </select>
+     
+        <select id="queryRasterColor" resultType="rasterColorMap">
+         SELECT 
+         color_map_id AS colorId,
+         color_map_name AS colorName,
+         color_map_url AS colorUrl
+         FROM color_map
+     </select>
+     
+     <delete id="deleteStyleInfo" parameterType="list">
+         delete 
+		 from 
+		style_info
+		where is_default != 0
+		and id in
+		<foreach collection="list" item="id" index="id" open="(" close=")" separator=",">
+		    #{id}
+		</foreach>
+     </delete>
+     
+     <select id="querySldNames" parameterType="list" resultType="String">
+         select style_name from style_info
+         where id in 
+         <foreach collection="list" item="id" index="id" open="(" close=")" separator=",">
+              #{id}
+         </foreach>
+     </select>
+     
+     <select id="queryStyleId" parameterType="list" resultType="String">
+         select style_id from style_info
+         where id in 
+         <foreach collection="list" item="id" index="id" open="(" close=")" separator=",">
+              #{id}
+         </foreach>
+     </select>
+     
+     <select id="queryStyleRelationServer" parameterType="list" resultType="String">
+         select 
+			msi.server_name
+		 from 
+		 server_style_info ssi,
+		 map_server_info msi
+		 where 
+		 ssi.server_id = msi.server_id
+		 and ssi.style_id in 
+		 <foreach collection="list" item="id" index="id" open="(" close=")" separator=",">
+		    #{id}
+		</foreach>
+     </select>
+     
+     
+     
+     <select id="queryServerIdsByStyleIds" parameterType="list" resultType="int">
+         select 
+			server_id
+		 from 
+		 server_style_info
+		 where style_id in
+		 <foreach collection="list" item="styleId" index="id" open="(" close=")" separator=",">
+		    #{styleId}
+		</foreach>
+     </select>
+     
+     <update id="updateServerStyleId" parameterType="list">
+         <foreach collection="list" item="id" index="index" separator=";">
+              update 
+				 server_style_info
+				 set style_id = (
+					 case (select type_id from style_info where id = #{id}) 
+					 when 2 then 2
+					 when 3 then 11
+					 when 4 then 22
+					 when 5 then 29
+					 else 1
+					 end
+				 )
+				 where style_id = #{id}
+         </foreach>
+     </update>
+
+    <select id="queryServerByStyle" parameterType="int" resultMap="dataServerEntity">
+        select
+        msi.server_name,
+        msi.layer_name,
+        msi.pulished_proctol,
+        mfi.zoom_level,
+        mfi.resource_bbox,
+        mfi.native_bbox,
+        mfi.resource_crs,
+        mfi.native_crs
+        from
+        map_server_info msi left join map_feature_info mfi
+        on msi.server_id = mfi.server_id
+        where
+        is_layer_group = 0
+        and mfi.data_format = #{typeId}
+    </select>
+</mapper>

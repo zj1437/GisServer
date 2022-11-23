@@ -1,0 +1,488 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.pygisserver.pytc.dao.TileCacheMapper">
+     <resultMap type="org.pygisserver.common.entity.TileTaskEntity" id="tileTaskEntity">
+         <id column="task_id" property="taskId" />
+         <result column="task_name" property="taskName" />
+         <result column="task_status" property="taskStatus"/>
+         <result column="progress" property="progress"/>
+         <result column="tiled_tiles" property="tiledTiles"/>
+         <result column="total_tiles" property="totalTiles"/>
+         <result column="spent_time_str" property="spentTimeStr"/>
+         <result column="spent_time" property="spentTime"/>
+         <result column="time_remaining_str" property="timeRemainingStr"/>
+         <result column="time_remaining" property="timeRemaining"/>
+         <result column="support_grid" property="supportGrid"/>
+         <result column="support_format" property="supportFormat"/>
+         <result column="task_start_time" property="taskStartTime"/>
+         <result column="task_end_time" property="taskEndTime"/>
+         <result column="task_type" property="taskType"/>
+         <result column="level_range" property="levelRange"/>
+     </resultMap>
+
+    <insert id="saveTileTaskEntity" parameterType="org.pygisserver.common.entity.TileTaskEntity" useGeneratedKeys="true" keyProperty="taskId">
+        insert into tile_task_entity_info(task_id,task_name,layer_name,task_status,progress,tiled_tiles,suspend_tiles,total_tiles,spent_time_str,
+             time_remaining_str,task_type,level_range)
+        values(#{taskId},#{taskName},#{layerName},#{taskStatus},#{progress},#{tiledTiles},#{suspendTileSize},#{totalTiles},#{spentTimeStr},
+             #{timeRemainingStr},#{taskType},#{levelRange})
+    </insert>
+    
+    <update id="updateTileTaskEntity" parameterType="list">
+        <foreach collection="list" item="taskEntity" index="id" separator=";">
+            update tile_task_entity_info
+	        set 
+	        task_status = #{taskEntity.taskStatus},
+	        <if test="taskEntity.suspendTileSize != 0">
+	        	suspend_tiles = #{taskEntity.suspendTileSize}+suspend_tiles,
+	        </if>
+	        <if test="taskEntity.tiledTiles != 0">
+		        tiled_tiles = #{taskEntity.tiledTiles}+suspend_tiles,
+	        </if>
+	        <if test="taskEntity.totalTiles != 0">
+		        total_tiles = #{taskEntity.totalTiles},
+	        </if>
+	        <if test="taskEntity.suspendSpentTime != 0">
+	         	suspend_spent_time = #{taskEntity.suspendSpentTime}+suspend_spent_time,
+	        </if>
+	        spent_time = #{taskEntity.spentTime}+suspend_spent_time,
+	        time_remaining_str = #{taskEntity.timeRemainingStr},
+	        <choose>
+	            <when test="taskEntity.progress != null and taskEntity.progress != ''">
+	                progress = #{taskEntity.progress}
+	            </when>
+	            <otherwise>
+			        progress = concat(concat((#{taskEntity.tiledTiles}+suspend_tiles),'/',total_tiles,'='),round((#{taskEntity.tiledTiles}+suspend_tiles)::numeric/total_tiles*100,2),'%')
+	            </otherwise>
+            </choose>
+	        ,task_end_time = #{taskEntity.taskEndTime}
+	        where task_name = #{taskEntity.taskName}
+        </foreach>
+    </update>
+
+    
+    <update id="updateTileTaskTiles">
+            update tile_task_entity_info
+	        set total_tiles = #{totalTiles},
+	        task_status = #{status},
+	        task_start_time =
+	        case when task_start_time is null then #{startSeedTime}
+	        else task_start_time end
+	        where task_name = #{taskName}
+    </update>
+    
+    <select id="queryTileTaskEntity" resultType="tileTaskEntity" parameterType="list">
+        select
+          ttei.task_id as taskId,
+          ttei.task_name as taskName,
+          ttei.layer_name as layerName,
+          ttei.task_status as taskStatus,
+          ttei.progress as progress,
+          ttei.tiled_tiles as tiledTiles,
+          ttei.suspend_tiles as suspendTileSize,
+          ttei.total_tiles as totalTiles,
+          ttei.spent_time_str as spentTimeStr,
+          ttei.suspend_spent_time as suspendSpentTime,
+          ttei.spent_time as spentTime,
+          ttei.time_remaining_str as timeRemainingStr,
+          ttei.task_start_time as taskStartTime,
+          ttei.task_end_time as taskEndTime,
+          ttei.task_type as taskType,
+          ttei.level_range as levelRange
+        from tile_task_entity_info ttei
+        where 1=1
+        and task_name in 
+        <foreach collection="list" item="taskName" index="id" open="(" close=")" separator=",">
+            #{taskName}
+        </foreach>
+    </select>
+    
+    
+     <select id="queryTileTaskEntityByServerId" resultType="tileTaskEntity" parameterType="list">
+        select
+          ttei.task_id as taskId,
+          ttei.task_name as taskName,
+          ttei.layer_name as layerName,
+          ttei.task_status as taskStatus,
+          ttei.progress as progress,
+          ttei.tiled_tiles as tiledTiles,
+          ttei.suspend_tiles as suspendTileSize,
+          ttei.total_tiles as totalTiles,
+          ttei.spent_time_str as spentTimeStr,
+          ttei.suspend_spent_time as suspendSpentTime,
+          ttei.spent_time as spentTime,
+          ttei.time_remaining_str as timeRemainingStr,
+          ttei.task_start_time as taskStartTime,
+          ttei.task_end_time as taskEndTime,
+          ttei.task_type as taskType,
+          ttei.level_range as levelRange
+        from tile_task_entity_info ttei
+        where 1=1
+        and task_id in 
+        <foreach collection="list" item="taskId" index="id" open="(" close=")" separator=",">
+            #{taskId}
+        </foreach>
+    </select>
+    
+    <select id="queryTileTaskEntityByParam" parameterType="requestQueryCondition" resultType="tileTaskEntity">
+        select
+          ttei.task_id as taskId,
+          ttei.task_name as taskName,
+          ttei.layer_name as layerName,
+          ttei.task_status as taskStatus,
+          ttei.progress as progress,
+          ttei.tiled_tiles as tiledTiles,
+          ttei.suspend_tiles as suspendTileSize,
+          ttei.total_tiles as totalTiles,
+          ttei.spent_time_str as spentTimeStr,
+          ttei.suspend_spent_time as suspendSpentTime,
+          ttei.spent_time as spentTime,
+          ttei.time_remaining_str as timeRemainingStr,
+          ttei.task_start_time as taskStartTime,
+          ttei.task_end_time as taskEndTime,
+          ttei.task_type as taskType,
+          ttei.level_range as levelRange
+        from tile_task_entity_info ttei
+        where 1=1
+        <if test="serverName != null and serverName !='' ">
+            and ttei.layer_name ~* #{serverName}
+        </if>
+        <if test="serverStatus != -2">
+            and ttei.task_status = #{serverStatus}
+        </if>
+        <if test="pageInfo != null and pageInfo != ''">
+            <choose>
+              <when test="pageInfo != null">
+                  <choose>
+                      <when test="pageInfo.sidx != null and pageInfo.sidx != ''">
+                          <if test="pageInfo.sidx == 'layerName'">
+                             order by task_status asc,layer_name ${pageInfo.sord},to_timestamp(task_start_time,'yyyy-MM-dd HH24:mi:ss.MS') desc
+                          </if>
+                          <if test="pageInfo.sidx == 'serverStatus'">
+                             order by task_status asc,task_status ${pageInfo.sord},to_timestamp(task_start_time,'yyyy-MM-dd HH24:mi:ss.MS') desc
+                          </if>
+                          <if test="pageInfo.sidx == 'progress'">
+                             order by task_status asc,progress ${pageInfo.sord},to_timestamp(task_start_time,'yyyy-MM-dd HH24:mi:ss.MS') desc
+                          </if>
+                          <if test="pageInfo.sidx == 'spentTimeStr'">
+                             order by task_status asc,spent_time_str ${pageInfo.sord},to_timestamp(task_start_time,'yyyy-MM-dd HH24:mi:ss.MS') desc
+                          </if>
+                          <if test="pageInfo.sidx == 'timeRemainingStr'">
+                             order by task_status asc,time_remaining_str ${pageInfo.sord},to_timestamp(task_start_time,'yyyy-MM-dd HH24:mi:ss.MS') desc
+                          </if>
+                      </when>
+                      <otherwise>
+                          order by task_status asc,task_end_time desc,to_timestamp(task_start_time,'yyyy-MM-dd HH24:mi:ss.MS') desc
+                      </otherwise>
+                  </choose>
+              </when>
+              <otherwise>
+                  order by task_status asc,task_end_time desc,to_timestamp(task_start_time,'yyyy-MM-dd HH24:mi:ss.MS') desc
+              </otherwise>
+          </choose>
+          <if test="pageInfo.pageSize != 0">
+               LIMIT #{pageInfo.pageSize} offset (${pageInfo.pageNum} - 1)*${pageInfo.pageSize}
+          </if>
+        </if>
+    </select>
+    
+        <select id="queryTileTaskNum" parameterType="requestQueryCondition" resultType="int">
+        select count(*) from tile_task_entity_info ttei where 1 = 1
+        <if test="serverName != null and serverName !='' ">
+            and ttei.layer_name ~* #{serverName}
+        </if>
+        <if test="serverStatus != -2">
+            and ttei.task_status = #{serverStatus}
+        </if>
+    </select>
+    
+    
+    <update id="updateTileTaskEntityStatus">
+        update tile_task_entity_info
+        set 
+        task_status = #{taskStatus}
+        where task_name = #{taskName}
+    </update>
+    
+    <delete id="deleteTileTaskEntityById" parameterType="list">
+        delete from tile_task_entity_info 
+        where task_name in
+        <foreach collection="list" item="taskName" index="id" open="(" close=")" separator=",">
+            #{taskName}
+        </foreach>
+    </delete>
+    
+    <delete id="clearWrongStatusTasks" parameterType="String">
+        delete from tile_task_entity_info where task_name = #{taskName} and task_status in (-1,1,3)
+    </delete>
+    
+    <select id="queryServerProtocolInfo" resultType="serverProtocolInfo"> 
+        select 
+        protocol_id as protocolId,
+        protocol_name as protocolName,
+        version_list as versionList,
+        tile_grid_set as tileGridSet,
+        support_format as supportFormat
+        from server_protocol_info
+    </select>
+    
+    <!-- 查询缓存配置信息 -->
+    <select id="queryTileCacheConfig" resultType="org.pygisserver.common.entity.SeedTaskParam">
+        select 
+	       store_type as storeType,
+	       seed_type as type,
+	       store_path as storePath,
+	       default_srs as gridSetName,
+	       raster_format as rasterFormat,
+	       dem_format as demFormat,
+		   vector_format as vectorFormat,
+		   tile_width_size as tileWidth,
+		   tile_height_size as tileHeight,
+		   tile_max_level as defaultMaxZoomLevel,
+		   max_task_num as maxTaskNum,
+		   default_thread_num as threadCount,
+		   export_path as exportPath
+	    from auto_tile_config
+    </select>
+
+    <update id="updateTaskInstance" >
+        update tile_task_info
+        set start_seed_time =
+        case when start_seed_time is null then #{startSeedTime}
+        else start_seed_time end
+        where task_name = #{taskName}
+    </update>
+
+    <!-- 保存切片任务实例 -->
+    <insert id="saveTileTaskInstance" parameterType="seedTaskInstance">
+        insert into tile_task_info(task_id,task_name,layer_name,store_type,store_path,srs_style,tile_style,seed_type,
+        max_task_num,thread_num,zoom_start,zoom_end,min_lon,min_lat,max_lon,max_lat,tile_width,tile_height)
+        values
+          (#{taskId},#{taskName},#{layerName},#{storeType},#{storePath},#{srs},#{tileFormat},#{seedType},
+          #{maxTaskNum},#{threadNum},#{zoomStart},#{zoomEnd},#{minX},#{minY},#{maxX},#{maxY},#{tileWidth},#{tileHeight}) 
+    </insert>
+    
+    <select id="queryTileImageInfo" resultType="org.pygisserver.common.pytc.entity.TileResourceInfo">
+       select 
+         	tile_data as byteResource,
+			tile_column as x,
+			tile_row as y,
+			zoom_level as z
+         from  ${table}
+        where  tile_column = #{x} and tile_row = #{y} and zoom_level = #{z}
+        limit 1
+    </select>
+    
+    <select id="queryTaskInstance" resultType="seedTaskInstance" parameterType="string">
+        SELECT 
+	        task_id as taskId,
+	        layer_name as layerName,
+	        task_name as taskName,
+	        store_type as storeType,
+	        store_path as storePath,
+	        srs_style as srs,
+	        tile_style as tileFormat,
+	        seed_type as seedType,
+	        start_seed_time as startTime,
+	        max_task_num as maxTaskNum,
+	        thread_num as threadNum,
+	        zoom_start as zoomStart,
+	        zoom_end as zoomEnd,
+	        min_lon as minX,
+	        min_lat as minY,
+	        max_lon as maxX,
+	        max_lat as maxY,
+	        tile_width as tileWidth,
+	        tile_height as tileHeight
+	    from tile_task_info
+	    where task_name = #{taskName}
+    </select>
+    
+    <select id="queryTaskInstancesByLayerName" resultType="seedTaskInstance" parameterType="string">
+        SELECT 
+	        task_id as taskId,
+	        layer_name as layerName,
+	        task_name as taskName,
+	        store_type as storeType,
+	        store_path as storePath,
+	        srs_style as srs,
+	        tile_style as tileFormat,
+	        seed_type as seedType,
+	        start_seed_time as startTime,
+	        max_task_num as maxTaskNum,
+	        thread_num as threadNum,
+	        zoom_start as zoomStart,
+	        zoom_end as zoomEnd,
+	        min_lon as minX,
+	        min_lat as minY,
+	        max_lon as maxX,
+	        max_lat as maxY,
+	        tile_width as tileWidth,
+	        tile_height as tileHeight
+	    from tile_task_info
+	    where layer_name = #{layername}
+    </select>
+    
+    <select id="queryTmsTaskEntityByParam" resultType="seedTaskInstance" parameterType="string">
+        SELECT 
+	        task_id as taskId,
+	        layer_name as layerName,
+	        task_name as taskName,
+	        store_type as storeType,
+	        store_path as storePath,
+	        srs_style as srs,
+	        tile_style as tileFormat,
+	        seed_type as seedType,
+	        start_seed_time as startTime,
+	        max_task_num as maxTaskNum,
+	        thread_num as threadNum,
+	        zoom_start as zoomStart,
+	        zoom_end as zoomEnd,
+	        min_lon as minX,
+	        min_lat as minY,
+	        max_lon as maxX,
+	        max_lat as maxY,
+	        tile_width as tileWidth,
+	        tile_height as tileHeight
+	    from tile_task_info
+	    where store_type = 5
+	    <if test="layerName != null and layerName != ''">
+	        and layer_name = #{layerName}
+	    </if> 
+	    
+    </select>
+    
+    <insert id="saveTileResourceInfo">
+        insert into ${tableName} (zoom_level,tile_column,tile_row,tile_data)
+        values (#{resourceInfo.z},#{resourceInfo.x},#{resourceInfo.y},#{resourceInfo.byteResource})
+    </insert>
+    
+    <select id="queryLayerBaseInfo" parameterType="requestQueryCondition" resultType="layerBaseInfo">
+        select
+        msi.layer_name as layerName,
+        mfi.resource_crs as resourceSrs,
+        mfi.tile_extension as resourceFormat,
+        mfi.tile_width as tileWidth,
+        mfi.tile_height as tileHeight,
+        msi.file_url as filePath,
+        msi.file_type as fileType,
+        msi.data_type as dataType,
+        msi.description as description,
+        mfi.zoom_level as supportMaxLevel,
+        msi.server_status as status,
+        msi.pulished_proctol as supportProtocal,
+        mfi.resource_bbox as resourceBbox,
+        mfi.resource_crs as resourceSrs,
+        mfi.native_bbox as nativaBbox,
+        mfi.tile_origin_flag as origin,
+        msi.is_layer_group as isLayerGroup,
+        style_info.style_name as styleName
+        from 
+        map_server_info msi 
+        left join map_feature_info mfi on msi.server_id = mfi.server_id
+        left join server_style_info ssi on ssi.server_id = msi.server_id
+        left join style_info on style_info.id = ssi.style_id
+        where 1 = 1
+        <if test = "serverName != null and serverName != ''">
+	        and msi.layer_name = #{serverName}
+        </if>
+        <if test="protocolName != null and protocolName != ''">
+		    and msi.pulished_proctol ~* #{protocolName}
+        </if>
+	    and msi.is_public = 1
+    </select>
+    
+    <update id="updateLayerStatus">
+        update
+        map_server_info
+        set server_status = #{status}
+        where server_name = #{layerName}
+    </update>
+    
+    <delete id="deleteTileTaskInstance" parameterType="list">
+        delete 
+        from 
+        tile_task_info
+        where task_name in
+        <foreach collection="list" item="task" index="id" open="(" close=")" separator=",">
+            #{task}
+        </foreach>
+    </delete>
+    
+    <delete id="deleteSourceTable" parameterType="collection">
+        delete 
+        from 
+        dynamic_data_source
+        where layer_name in
+        <foreach collection="collection" item="layer" index="id" open="(" close=")" separator=",">
+            #{layer}
+        </foreach>
+    </delete>
+    
+    <update id="openSqliteWALMode">
+        pragma journal_mode = WAL
+    </update>
+
+	<update id="updateLayerStoreInfo">
+	    update layer_store_info
+	    set layer_name = #{newName}
+	    where layer_name = #{oldName}
+	</update>    
+	
+	<select id="queryExistsTableNames" parameterType="String" resultType="String">
+		slect 
+		table_name
+		from
+		table_source 
+		left join dynamic_data_source
+		on dynamic_data_source.source_id = table_source.source_id
+		where dynamic_data_source.source_key = #{sourceKey}
+	</select>
+	
+	<select id="queryPostGisBySourceName" parameterType="String" resultType="postGisConnectEntity">
+         select 
+         data_source_name as dataSourceName,
+         database_name as databaseName,
+         database_ip as databaseIp,
+         port as port,
+         user_name as userName,
+         password as password,
+         db_type as dbType
+         from 
+         post_gis_info where data_source_name = #{sourceName}
+     </select>
+	
+	<select id="queryTileLayerName" parameterType="list" resultType="string">
+	    select 
+	    layer_name
+	    from tile_task_info
+	    where task_id in
+	    <foreach collection="list" item="taskid" index="id" open="(" close=")" separator=",">
+	        #{taskid}
+	    </foreach>
+	</select>
+	
+	    <select id="queryGlobalSeedParam" resultType="org.pygisserver.common.entity.SeedTaskParam">
+        select 
+	       store_type as storeType,
+	       seed_type as type,
+	       store_path as storePath,
+	       default_srs as gridSetName,
+	       raster_format as rasterFormat,
+	       dem_format as demFormat,
+		   vector_format as vectorFormat,
+		   tile_width_size as tileWidth,
+		   tile_height_size as tileHeight,
+		   tile_max_level as defaultMaxZoomLevel,
+		   max_task_num as maxTaskNum,
+		   default_thread_num as threadCount
+	    from auto_tile_config
+    </select>
+
+    <select id="queryDataformatByServerid" parameterType="int" resultType="int">
+        select data_format
+        from map_feature_info
+        where server_id = #{serverid}
+    </select>
+</mapper>
+

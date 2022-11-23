@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.PoiQueryMapper">
+
+    <select id="queryBestPoiCount" parameterType="poiQueryInfo" resultType="int">
+        SELECT COUNT(gid)
+        FROM chinapoi
+        WHERE 1=1
+        <include refid="queryCondition"></include>
+    </select>
+
+    <sql id="queryCondition">
+        <!-- 圆形检索 -->
+        <if test="point != null and point != ''">
+            AND ST_DWithin(geom,st_geometryfromtext(#{point}),#{distance}/111319.49)
+        </if>
+        <!-- 矩形检索 -->
+        <!--         <if test="bounds != null and bounds != ''"> -->
+        <!--             AND geom && ST_MakeEnvelope(#{minLongitude},#{minLatitude},#{maxLongitude},#{maxLatitude}) -->
+        <!--         </if> -->
+        <if test="bounds != null and bounds != ''">
+            AND geom &amp;&amp; st_buffer(st_geometryfromtext(#{bounds}),#{distance}/111319.49,'endcap=round join=round')
+        </if>
+        <!-- 线性检索 -->
+        <if test="lineString != null and lineString != ''">
+            AND ST_Intersects(geom::geography,st_buffer(ST_GeomFromText(#{lineString}),#{distance}/111319.49,'endcap=round join=round')::geography)
+        </if>
+        <!-- 多边形检索 -->
+        <if test="polygon != null and polygon != ''">
+            AND geom &amp;&amp; st_buffer(st_geometryfromtext(#{polygon}),#{distance}/111319.49,'endcap=round join=round')
+        </if>
+         <!-- 查询关键字 -->
+         <if test="keyWords != null and keyWords != ''">
+         	<choose>
+         	    <when test="keyWordsLength > 2">
+         	        <!--AND ((name ~ CnHalfToFull('${keyWords}')) or (address ~ CnHalfToFull('${keyWords}'))) -->
+         	        AND name ~ CnHalfToFull('${keyWords}') or name ~ ('${keyWords}')
+         	    </when>
+         	    <otherwise>
+	                <!-- AND ((splitstr(name) @> array[CnHalfToFull('${keyWords}')::text]) or (splitstr(address) @> array[CnHalfToFull('${keyWords}')::text])) -->
+	                AND splitstr(name) @> array[CnHalfToFull('${keyWords}')::text]
+	             </otherwise>
+         	</choose>
+         </if>
+         <!-- 查询指定区域 -->
+		 <if test="region != '全国'">
+ 	         AND admincode IN (<include refid="queryRegionCode"></include>)
+         </if>
+          <!-- 查询指定类型 -->
+          <choose>
+              <when test="type !=null and type != ''">
+                   AND kindname ~ #{type}
+              </when>
+              <otherwise>
+                  <!-- 饭店、住宿、学校、医院 -->
+                  <if test="scope==2">
+                       AND kind ~ '^1[1,2,6,7].*'
+                  </if>
+              </otherwise>
+          </choose>
+     </sql>
+     
+     <select id="queryBestPoiInfo" parameterType="poiQueryInfo" resultType="poiQueryResult">
+         <choose>
+             <!-- 中文分词通过程序来处理  TODO 需要使用postgresql自身中文分词来替换 -->
+             <when test="keyWordList != null and keyWordList.size > 0">
+                 <foreach collection="keyWordList" item="keyWords" separator="union"  index="index">
+                     (<include refid="querySingleParam"></include>)
+                 </foreach>
+             </when>
+             <otherwise>
+                 <include refid="querySingleParam"></include>
+             </otherwise>
+         </choose>
+     </select>
+     
+      
+      <sql id="querySingleParam">
+          SELECT 
+            <include refid="baseColumn"></include>
+	         <if test="point != null and point != ''">
+	            ,ST_Distance(geom,st_geometryfromtext(#{point})) * 100000 as distance
+	        </if>
+	         from chinapoi
+	         where 1 = 1
+		    <include refid="queryCondition"></include>
+		    order by
+		    <if test="point != null and point != ''">
+               distance,
+            </if> 
+		    poi_flag asc, kind desc
+		    <!-- 默认分页显示 -->
+		    <if test="scope == 1">
+			    LIMIT #{pageSize} offset (#{pageNum} - 1)*#{pageSize}
+		    </if>
+		    <if test="scope==2">
+                 LIMIT 2000
+            </if>
+      </sql>
+      
+     <!-- 基础列 -->
+     <sql id="baseColumn">
+          gid as id,
+          pid as uid,
+          ST_XMax(geom) as longitude,
+          ST_YMax(geom) as latitude,
+          telephone as phone,
+          admincode as admincode,
+          zipcode as zipCode,
+          kindname as type,
+          name as name,
+          address as address,
+          poi_flag,
+          kind
+     </sql>
+
+    <sql id="queryRegionCode">
+        <if test="region != null and region !=''">
+            SELECT pr.admincode FROM poi_region pr WHERE pr.city_name LIKE CONCAT('%',#{region},'%') or pr.region_name LIKE CONCAT('%',#{region},'%')
+        </if>
+    </sql>
+    <!-- poi导入 -->
+    <insert id="insertPostGisTable" useGeneratedKeys="true" >
+        INSERT INTO chinapoi (gid ,zipcode,telephone,name,address,geom)
+         VALUES (DEFAULT ,
+        <foreach collection="values" index="index" item="value" open="" separator="," close="">
+       	'${value}'
+        </foreach>)
+    </insert>
+
+</mapper>

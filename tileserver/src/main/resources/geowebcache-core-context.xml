@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  <description>
+   Bean configuration file for the gwc-core module
+  </description>
+
+  <!-- redisUtil -->
+  <bean id="redisUtil" class="org.pygisserver.common.redis.util.RedisUtils">
+  </bean>
+
+  <bean id="gwcGridSetBroker" class="org.geowebcache.grid.GridSetBroker">
+    <constructor-arg>
+      <list>
+        <bean id="defaultGridsets" class="org.geowebcache.config.DefaultGridsets">
+          <constructor-arg type="boolean" value="TRUE" />
+          <constructor-arg type="boolean" value="TRUE" />
+        </bean>
+      </list>
+    </constructor-arg>
+  </bean>
+  
+</beans>

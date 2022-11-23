@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.pygisserver.pytc.dao.CommonMapper">
+
+      <resultMap type="org.pygisserver.common.pytc.entity.DataSourceEntity" id="dataSource">
+         <id column="source_id" property="id" />
+         <result column="source_key" property="sourceKey"/>
+         <result column="layer_name" property="layerName"/>
+         <result column="user_name" property="userName"/>
+         <result column="password" property="password"/>
+         <result column="driver_class" property="driverClass"/>
+         <result column="jdbc_Url" property="jdbcUrl"/>
+	     <collection property="tableSources" ofType="org.pygisserver.common.pytc.entity.TableSource">
+	         <id column="table_id" property="id"/>
+	         <result column="source_id" property="sourceId"/>
+	         <result column="table_name" property="tableName"/>
+	     </collection>
+     </resultMap>
+    
+	<select id="queryDataSourceInfo" resultMap="dataSource">
+	    select 
+	        dynamic_data_source.source_id,
+		    source_key,
+		    layer_name,
+		    user_name,
+		    password,
+		    driver_class,
+		    jdbc_Url,
+		    table_id,
+		    table_source.source_id,
+		    table_name
+	    from dynamic_data_source
+	    LEFT JOIN table_source
+	    ON dynamic_data_source.source_id = table_source.source_id
+	</select>
+	
+	<select id="queryDataDbNameByLayer" parameterType="String" resultType="String">
+	   select source_key from dynamic_data_source where layer_name = #{layerName}
+	</select>
+
+    <insert id="saveDataSource" parameterType="org.pygisserver.common.pytc.entity.DataSourceEntity" useGeneratedKeys="true" keyProperty="id">
+        insert into dynamic_data_source(source_id,source_key,layer_name,user_name,password,driver_class,jdbc_Url)
+        values(default,#{sourceKey},#{layerName},#{userName},#{password},#{driverClass},#{jdbcUrl});
+    </insert>
+    
+    <insert id="savaTableSource" parameterType="org.pygisserver.common.pytc.entity.TableSource">
+        insert into table_source(table_id,source_id,table_name)
+        values(default,#{sourceId},#{tableName});
+    </insert>
+
+	<delete id="deleteSourceTable" parameterType="String">
+	    delete from 
+		dynamic_data_source
+		where source_key=#{dbsource}
+	</delete>
+	
+	
+    <update id="createDBSource">
+        CREATE database ${dbname} TEMPLATE template0
+    </update>
+    
+    <update id="createTableForDB">
+        CREATE TABLE ${tableName} (
+          zoom_level integer NOT NULL,
+          tile_column integer NOT NULL,
+          tile_row integer NOT NULL,
+          tile_data bytea NOT NULL
+        );
+    </update>
+    
+    <update id="createSqliteTableForDB">
+        CREATE TABLE ${tableName} (
+          zoom_level integer NOT NULL,
+          tile_column integer NOT NULL,
+          tile_row integer NOT NULL,
+          tile_data BLOB NOT NULL
+        );
+    </update>
+    
+    <update id="createIndex">
+       CREATE INDEX ${indexName} ON ${tableName} (
+	      zoom_level,
+	      tile_column,
+	      tile_row
+	   );
+    </update>
+    
+    
+    
+    <delete id="dropDataBase" parameterType="list">
+        <foreach collection="list" item="dbname" index="id" separator=";">
+        	DROP DATABASE IF EXISTS "${dbname}"
+        </foreach>
+    </delete>
+    
+    <delete id="dropTableName" parameterType="list">
+         <foreach collection="list" item="tableName" index="id" separator=";">
+        	DROP table IF EXISTS ${tableName}
+        </foreach>
+    </delete>
+    
+    <select id="queryServerContact" resultType="org.pygisserver.common.entity.ServerContact">
+         SELECT 
+            id as id,
+            title_name AS titleName,
+            abstract_name AS abstractName,
+            keywords AS keywords, 
+            online_resource AS onLineResource,
+            contact_Organization AS organization,
+         	web_site AS webSite,
+			contact_person AS contactPerson,
+			person_primary AS primary,
+			contact_telephone AS telephone,
+			contact_fax AS fax,
+			address AS address,
+			city AS city,
+			province AS province,
+			country AS country,
+			postcode AS postcode,
+			email_address AS email
+	     FROM server_provider_info
+     </select>
+     
+     <delete id="flushTable" parameterType="list">
+         <foreach collection="list" item="tableName" index="id" separator=";">
+        	delete from ${tableName}
+        </foreach>
+     </delete>
+     
+     <select id="querySourceId" parameterType="String" resultType="Int">
+         SELECT source_id from dynamic_data_source
+         where source_key = #{dbName}
+     </select>
+     
+     <insert id="saveLayerStoreInfo" parameterType="org.pygisserver.common.pytc.entity.LayerStoreTypeInfo">
+          insert into layer_store_info(source_name,layer_name,store_type,store_path,tile_size,grid_set,tile_style)
+          values(#{dataSource},#{layerName},#{storeTypeId},#{storePath},#{tileSize},#{srs},#{tileFormat});
+     </insert>
+     
+     <update id="updateDBName">
+         alter database ${oldDbName} rename to ${newDbName}
+     </update>
+     
+     <update id="updateDynamicSource">
+         update dynamic_data_source
+         set source_key = #{newDbName},
+         layer_name = #{newLayer},
+         jdbc_Url = #{jdbcUrl}
+         where source_key = #{oldName}
+     </update>
+     
+     <select id="queryLayerStore" parameterType="String" resultType="org.pygisserver.common.pytc.entity.LayerStoreTypeInfo">
+         SELECT 
+	         source_name AS dataSource,
+		     layer_name AS layerName,
+			 store_type AS storeTypeId, 
+			 store_path AS storePath,
+			 tile_size AS tileSize,
+			 grid_set AS srs,
+			 tile_style AS tileFormat
+		FROM
+         layer_store_info
+         where layer_name = #{layerName}
+
+     </select>
+     <select id="queryLayerStoreByReq" parameterType="org.pygisserver.common.pytc.entity.TileRequestInfo" resultType="org.pygisserver.common.pytc.entity.LayerStoreTypeInfo">
+         SELECT 
+	         source_name AS dataSource,
+		     layer_name AS layerName,
+			 store_type AS storeTypeId, 
+			 store_path AS storePath,
+			 tile_size AS tileSize,
+			 grid_set AS srs,
+			 tile_style AS tileFormat
+		FROM
+         layer_store_info
+         where 1=1
+         <if test="layerName != null and layerName != ''">
+           and layer_name = #{layerName}
+         </if>
+         <if test="mineType != null and mineType != ''">
+           and tile_style = #{mineType}
+         </if>
+         <if test="gridSet != null and gridSet != ''">
+           and grid_set = #{gridSet}
+         </if>
+           and tile_size = #{tileWidth}
+     </select>
+     
+     <delete id="deleteLayerStore" parameterType="collection">
+        delete 
+        from 
+        layer_store_info
+        where layer_name in
+        <foreach collection="collection" item="layer" index="id" open="(" close=")" separator=",">
+            #{layer}
+        </foreach>
+    </delete>
+    
+         <delete id="deleteLayerStoreByDatasource" parameterType="String">
+        delete 
+        from 
+        layer_store_info
+        where source_name = #{dataSource}
+    </delete>
+     
+     <update id="terminateBackend">
+         SELECT pg_terminate_backend(pg_stat_activity.pid)
+         from pg_stat_activity
+         where datname = #{dbName} 
+         AND pid <![CDATA[ <> ]]> pg_backend_pid();
+     </update>
+     
+       <delete id="deleteDynamicTableInfo">
+        delete 
+        from 
+        dynamic_data_source
+        where 1 = 1 
+        <if test="layerName != null and layerName != ''">
+            and layer_name = #{layerName}
+        </if>
+        <if test="sourceName != null and sourceName != ''">
+            and source_key = #{sourceName}
+        </if>
+        
+    </delete>
+     
+     <delete id="deleteTaskEntityInfo" parameterType="int">
+        delete 
+        from 
+        tile_task_entity_info
+        where task_id = #{serverId}
+    </delete>
+    
+    <delete id="deleteTileTaskInfo">
+        delete 
+        from 
+        tile_task_info
+        where 1 = 1 
+        <if test="serverId != -1">
+           and task_id = #{serverId}
+        </if>
+        <if test="taskName != null and taskName != ''">
+            and task_name = #{taskName}
+        </if>
+    </delete>
+     
+</mapper>
+

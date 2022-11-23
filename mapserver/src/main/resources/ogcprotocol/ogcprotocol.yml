@@ -1,0 +1,93 @@
+#ogc协议用法信息
+ogcprotocol:
+  protocol: [WMS, WFS, WCS, WMTS]
+
+  wmtsInterface: [GetTile, GetCapabilities]
+
+  wmtsParameter:
+      -GetTile:
+        crs: [EPSG:4326, EPSG:3857]
+        outPutFormat: [image/png, image/jpeg]  #暂不支持image/tiff
+#      -GetCapabilities:
+
+
+  wmsInterface: [GetCapabilities, GetMap, GetFeatureInfo]
+
+  wmsparameter:
+      -GetCapabilities:
+        version: 1.3.0
+        outPutFormat: [application/xml]
+      -GetMap:
+        crs: [EPSG:4326, EPSG:3857]
+        outPutFormat: [image/png, image/jpeg]   #后期考虑适配image/png8和image/gif  image/tiff
+
+ #     -GetFeatureInfo:
+
+  wfsInterface: [GetCapabilities, GetFeature, DescribeFeatureType]
+  wfsParameter:
+      -GetCapabilities:
+        version: 2.0.0
+        outPutFormat: [application/xml]
+      -GetFeature:
+        crs: [EPSG:4326, EPSG:3857]
+        outPutFormat: [application/json, json, GML2]   #后期考虑适配kml、csv、text/csv、gml3、application/gml+xml;version=3.2
+      -GetFeatureType:
+        outPutFormat: [application/gml+xml;version=3.2, application/json]
+
+#暂不支持WCS协议
+#  wcsInterface: [GetCapabilities, DescribeCoverage, GetCoverage]
+#  wcsParameter:
+#      -GetCapabilities:
+#        version: 2.0.1
+#        outPutFormat: [application/xml]
+#      -DescribeCoverage:
+#        coverageId:
+#      -GetCoverage:
+#        outPutFormat: [image/tiff]
+
+  eColfFilter: ['>', <, =, like, '!=', '>=', <=, and, or, not, in, not in]
+  eColGeom:
+      -INTERSECTS:
+        name: 相交
+        method: INTERSECTS
+        example: INTERSECTS(the_geom,lineString(108 34,116 40))。第一个参数是固定写法，具体却决于当前数据的geomtry的name字段，一般是the_geom或者geom；第二个参数形式符合WKT格式。
+      -DISJOINT:
+        name: 脱节
+        method: DISJOINT
+        example: DISJOINT(the_geom,polygon((108 34,116 40,116 10,112 30,108 34)))。第一个参数是固定写法，具体却决于当前数据的geomtry的name字段，一般是the_geom或者geom；第二个参数形式符合WKT格式。
+      -TOUCHES:
+        name: 接触
+        method: TOUCHES
+        example: TOUCHES(the_geom,polygon((108 34,116 40,116 10,112 30,108 34)))。第一个参数是固定写法，具体却决于当前数据的geomtry的name字段，一般是the_geom或者geom；第二个参数形式符合WKT格式。
+      -CROSSES:
+        name: 交叉
+        method: CROSSES
+        example: CROSSES(the_geom,polygon((108 34,116 40,116 10,112 30,108 34)))。第一个参数是固定写法，具体却决于当前数据的geomtry的name字段，一般是the_geom或者geom，第二个参数形式符合WKT格式。
+      -CONTAINS:
+        name: 包含
+        method: CONTAINS
+        example: CONTAINS(the_geom,polygon((108 34,116 40,116 10,112 30,108 34)))。第一个参数是固定写法，具体却决于当前数据的geomtry的name字段，一般是the_geom或者geom；第二个参数形式符合WKT格式。
+      -WITHIN:
+        name: 包含于
+        method: WITHIN
+        example: WITHIN(the_geom,polygon((108 34,116 40,116 10,112 30,108 34)))。第一个参数是固定写法，具体却决于当前数据的geomtry的name字段，一般是the_geom或者geom；第二个参数形式符合WKT格式。
+      -OVERLAPS:
+        name: 重叠
+        method: OVERLAPS
+        example: OVERLAPS(the_geom,lineString(108 34,116 40,116 10,112 30))。第一个参数是固定写法，具体却决于当前数据的geomtry的name字段，一般是the_geom或者geom；第二个参数形式符合WKT格式。
+      -DWITHIN:
+        name: 小于指定距离
+        method: DWITHIN
+        example: DWITHIN(the_geom,lineString(108 34,109 35),10,kilometers)。第一个参数是固定写法，具体却决于当前数据的geomtry的name字段，一般是the_geom或者geom；第二个参数形式符合WKT格式；其中第三个参数是距离；最后一个参数是单位。常见单位有：feet(英尺), meters(米), nautical miles(海里), kilometers(公里)。
+      -BEYOND:
+        name: 大于指定距离
+        method: BEYOND
+        example: BEYOND(the_geom,lineString(108 34,109 35),10,kilometers)。第一个参数是固定写法，具体却决于当前数据的geomtry的name字段，一般是the_geom或者geom；第二个参数形式符合WKT格式；其中第三个参数是距离；最后一个参数是单位。常见单位有：feet(英尺), meters(米)，nautical miles(海里)。
+#      -DIFFERENCE:
+#        name: 差异分析
+#        method: DIFFERENCE
+#        example: difference(the_geom,lineString(108 34,116 40,116 10,112 30))。
+#      -DISTANCE:
+#        name: 距离计算
+#        method: DISTANCE
+#        example: distance(the_geom,point(108 34)) > 3。距离3的单位由参数的单位确定，本例中3的单位是弧度。

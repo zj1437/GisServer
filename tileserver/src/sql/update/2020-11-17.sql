@@ -1,0 +1,1 @@
+alter table tile_layer_info add column publish_time timestamp;

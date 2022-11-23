@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.SystemConfigMapper">
+     <resultMap type="serverAutoConfig" id="autoConfigMap">
+        <id column="id" property="id" />
+         <result column="is_open" property="isOpen" />
+         <result column="monitor_path" property="monitorPath"/>
+	     <collection property="dataFormat" ofType="publishedDataFormat">
+	         <result column="data_format" property="dataFormat"/>
+	         <result column="server_format" property="serverFormat"/>
+	         <result column="is_tiled" property="openTiled"/>
+	     </collection>
+     </resultMap>
+     
+     <resultMap type="FunctionPageEntity" id="functionPageEntity">
+        <id column="function_id" property="functionId" />
+        <result column="function_name" property="functionName" />
+        <result column="function_state" property="functionState" />
+        <result column="parent_function_id" property="parentFunctionId" />
+        <result column="function_route" property="functionRoute" />
+        <result column="function_opensubmenue" property="functionOpenSubmenue" />
+        <result column="function_index"  property="functionIndex" />
+        <result column="function_alias"  property="functionAlias" />
+        
+     </resultMap>
+     
+     <update id="updateSyetemPassword" parameterType="String">
+         UPDATE system_config_info
+         SET system_password = #{password} 
+         where id = 1
+     </update>
+     
+     <update id="updateSystemUser" parameterType="String">
+         UPDATE system_config_info
+         SET system_username = #{systemUsername}
+         where id = 1
+     </update>
+     
+     <update id="updateSyetemTilePath" parameterType="String">
+         UPDATE system_config_info
+         SET cache_system = #{cachepath} 
+         where id = 1
+     </update>
+     
+     <select id="querySystemConfigInfo" resultType="systemConfigInfo">
+         SELECT 
+          s.id as id,
+          s.system_username as systemUsername,
+          s.system_password as systemPassword,
+          s.file_server as fileServer,
+          s.file_upload_directory as fileUploadDir,
+          s.sys_time as systemTime,
+          s.style_path as stylePath
+         FROM system_config_info s where s.id = 1
+     </select>
+     
+     <select id="querySystemCachePath" resultType="String">
+         SELECT cache_system FROM system_config_info
+     </select>
+     
+     <insert id="saveServerProvider" parameterType="serverProvider">
+		UPDATE server_provider_info 
+		SET 
+		title_name = #{titleName},
+        abstract_name = #{abstractName},
+        keywords = #{keywords},
+        online_resource = #{onLineResource},
+        contact_Organization = #{organization},
+     	web_site = #{webSite},
+		contact_person = #{contactPerson},
+		person_primary = #{primary},
+		contact_telephone = #{telephone},
+		contact_fax = #{fax},
+		address = #{address},
+		city = #{city},
+		province = #{province},
+		country =  #{country},
+		postcode = #{postcode},
+		email_address = #{email}
+     </insert>
+     
+     <select id="queryServerProvider" resultType="serverProvider">
+         SELECT 
+            id as id,
+            title_name AS titleName,
+            abstract_name AS abstractName,
+            keywords AS keywords, 
+            online_resource AS onLineResource,
+            contact_Organization AS organization,
+         	web_site AS webSite,
+			contact_person AS contactPerson,
+			person_primary AS primary,
+			contact_telephone AS telephone,
+			contact_fax AS fax,
+			address AS address,
+			city AS city,
+			province AS province,
+			country AS country,
+			postcode AS postcode,
+			email_address AS email
+	     FROM server_provider_info
+     </select>
+     
+     <select id="queryCityInfo" resultType="cityInfo" parameterType="String">
+          SELECT 
+	         code_c as code,
+	         name as name
+         from city
+         where code_p = #{provinceCode}
+     </select>
+     
+     <select id="queryProvinceInfo" resultType="provinceInfo">
+         SELECT 
+         code_p as code,
+         name as name
+         from province
+     </select>
+     
+     <insert id="saveUploadFiles" parameterType="list">
+         INSERT INTO upload_file_info
+         (upload_id,file_name,upload_time,update_time,upload_user,file_size,file_type,file_Url)
+         VALUES
+         <foreach collection="list" index="index" item="uploadFile" separator=",">
+             (
+                 DEFAULT,#{uploadFile.fileName},#{uploadFile.uploadTime},
+                 #{uploadFile.updateTime},#{uploadFile.uploador},#{uploadFile.fileSize}
+                 ,#{uploadFile.fileType},#{uploadFile.fileUrl}
+             )
+         </foreach>
+     </insert>
+     
+     <select id="getUploadFiles" resultType="uploadFile" parameterType="String">
+         Select 
+	         upload_id as uploadId,
+	         file_name as fileName,
+	         upload_time as uploadTime,
+	         update_time as updateTime,
+	         upload_user as uploador,
+	         (file_size / 1024) as fileSize,
+	         file_type as fileType,
+	         file_Url as fileUrl 
+         from upload_file_info 
+         where upload_user = #{uploador}
+         order by update_time desc
+     </select>
+     
+     <select id="getUploadFileCount" resultType="int" parameterType="String">
+         Select count(upload_id)
+         from upload_file_info
+         where upload_user = #{uploador}
+     </select>
+     
+     <!-- 根据用户名删除对应的文件 -->
+     <delete id="deleteFileByFileName" parameterType="String">
+         delete from 
+         upload_file_info
+         where file_name = #{fileName}
+     </delete>
+     
+     <delete id="deleteFileByUserName" parameterType="list">
+         delete from 
+         upload_file_info
+         where upload_user in
+         <foreach collection="list" index="index" item="name" open="(" close=")" separator=",">
+             #{name}
+         </foreach>
+     </delete>
+     
+     <update id="updateFileSize" parameterType="uploadFile">
+         update upload_file_info
+         set file_size = file_size + #{fileSize}
+         where 
+         file_name = #{fileName}
+         and upload_user = #{uploador}
+     </update>
+     
+     <insert id="saveOrUpdateServerConfig">
+         insert into auto_server_config(id,is_open,monitor_path) values(1,#{isOpen},#{monitorPath}) ON conflict(id)
+         do update
+         set is_open=#{isOpen},
+         monitor_path=#{monitorPath}
+     </insert>
+     
+     <delete id="deleteDataFormat">
+     	delete from monitor_data_format
+     </delete>
+     
+     <insert id="saveDataFormat" parameterType="list" >
+         insert into monitor_data_format(data_format,server_format,is_tiled) values
+         <foreach collection="list" separator="," index="id" item="dataFormat">
+         	(#{dataFormat.dataFormat},#{dataFormat.serverFormat},#{dataFormat.openTiled})
+         </foreach>
+     </insert>
+     
+     <select id="queryServerAutoConfig" resultMap="autoConfigMap">
+         select 
+          id,
+          is_open,
+          monitor_path,
+          data_format,
+          server_format,
+          is_tiled
+          from 
+         auto_server_config,
+         monitor_data_format
+     </select>
+     
+     <update id="updateServerAutoConfig" parameterType="String">
+         update
+         auto_server_config
+         set monitor_path = #{autoPath}
+         where id = 1
+     </update>
+     
+     <update id="updateSystemConfig" parameterType="String">
+         update
+         system_config_info
+         set file_server = #{fileUrl}
+         where id = 1
+     </update>
+     
+     <select id="getFileServerPath" resultType="String">
+         Select file_server from system_config_info
+     </select>
+     
+     <select id="querySysTime" resultType="String">
+         select sys_time
+         from system_config_info
+     </select>
+     
+     <update id="updateSysTime" parameterType="String">
+         update system_config_info
+         set sys_time = #{sysTime}
+         where id = 1
+     </update>
+     
+     <select id="querySysStylePath" resultType="String">
+         select style_path from system_config_info
+     </select>
+     
+     <update id="updateSysStylePath" parameterType="String">
+         update system_config_info
+         set style_path = #{stylePath}
+         where id = 1
+     </update>
+     
+     <select id="querySysResource" resultType="map">
+         select 
+         resource_name,resource_path
+         from download_resource
+     </select>
+     
+     
+     <select id="querySeaChartFeatures" resultType="seaChartFeatureInfo">
+         select 
+	         code_no as codeNo,
+	         object_name as ObjectName,
+	         object_name_acronym as nameAcronym,
+	         is_standard as isStandard,
+	         is_base as isBase
+         from 
+         sea_chart_feature
+     </select>
+     
+     <select id="queryCacheConfig" resultType="serverCacheConfigEntity">
+         select 
+             id as cacheId,
+             min_ram as minRam,
+             max_ram as maxRam,
+             actual_ram as actualRam,
+             min_disk as minDisk,
+             max_disk as maxDisk,
+             actual_disk as actualDisk,
+             cache_path as cachePath,
+             use_redis_cache as useRedisCache
+         from
+             server_cache_config
+         where
+             id = 1
+     </select>
+     
+     <update id="updateMaxCacheConfig">
+         update
+             server_cache_config
+         set
+             max_ram=#{maxRam},
+             max_disk=#{maxDisk},
+             actual_disk=#{actualDisk},
+             cache_path=#{cachePath}
+         where
+             id = 1
+     </update>
+     
+     <update id="updateCacheConfig" parameterType="serverCacheConfigEntity">
+         update
+             server_cache_config
+         <set>
+             <if test="actualRam != 0">
+                 actual_ram=#{actualRam},
+             </if>
+             <if test="actualDisk != 0">
+                 actual_disk=#{actualDisk},
+             </if>
+             <if test="cachePath != '' and cachePath != null">
+                 cache_path=#{cachePath},
+             </if>
+             <if test="useRedisCache != -1">
+                 use_redis_cache=#{useRedisCache},
+             </if>
+         </set>
+         where
+             id = 1
+     </update>
+     
+     <select id="queryFunctionPageEntity" resultMap="functionPageEntity">
+     	select 
+     		function_id,
+     		function_name,
+     		function_state,
+     		parent_function_id,
+     		function_route,
+     		function_opensubmenue,
+     		function_index,
+     		function_alias
+     	from function_page_info
+     </select>
+</mapper>

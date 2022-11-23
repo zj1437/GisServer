@@ -1,0 +1,337 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.pygis.server</groupId>
+	<artifactId>mapserver</artifactId>
+	<packaging>war</packaging>
+	<name>mapserver</name>
+
+
+
+	<description>PYGISServer mapserver server</description>
+
+	<parent>
+		<groupId>org.pygis</groupId>
+		<artifactId>server</artifactId>
+		<version>2.0.0</version>
+	</parent>
+
+	<properties>
+		<shiro.version>1.4.0</shiro.version>
+	</properties>
+
+	<dependencies>
+
+		<dependency>
+			<groupId>org.pygis.server</groupId>
+			<artifactId>serverspi</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.pygis.server</groupId>
+			<artifactId>common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.pygis.server</groupId>
+			<artifactId>render</artifactId>
+		</dependency>
+		<!-- 如果客户不需要网络分析和地形分析  请将下面的两个依赖删除在打包 -->
+		<dependency>
+			<groupId>org.pygis.server</groupId>
+			<artifactId>netAnalysis</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.pygis.server</groupId>
+			<artifactId>terrainAnalysis</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+		<!-- 解决视图处理问题 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-starter-tomcat</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<!--  -->
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-wms</artifactId>
+			<version>25.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.oshi</groupId>
+			<artifactId>oshi-core</artifactId>
+			<version>5.5.1</version>
+		</dependency>
+
+		<!-- websocekt处理 -->
+		<dependency>
+			<groupId>javax.websocket</groupId>
+			<artifactId>javax.websocket-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.websocket</groupId>
+			<artifactId>javax.websocket-client-api</artifactId>
+		</dependency>
+
+
+		<!-- jdbc -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+		<!-- aop -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
+		<!-- Spring-mybatis -->
+		<dependency>
+			<groupId>org.mybatis.spring.boot</groupId>
+			<artifactId>mybatis-spring-boot-starter</artifactId>
+			<version>1.3.1</version>
+		</dependency>
+		<!-- durid -->
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>druid-spring-boot-starter</artifactId>
+			<version>1.1.10</version>
+		</dependency>
+
+
+		<!-- 		<dependency> -->
+		<!-- 			<groupId>com.github.ulisesbocchio</groupId> -->
+		<!-- 			<artifactId>jasypt-spring-boot-starter</artifactId> -->
+		<!-- 		</dependency> -->
+
+
+		<dependency>
+			<groupId>org.apache.shiro</groupId>
+			<artifactId>shiro-spring</artifactId>
+			<version>${shiro.version}</version>
+		</dependency>
+
+		<!--         <dependency> -->
+		<!--             <groupId>net.sf.json-lib</groupId> -->
+		<!--             <artifactId>json-lib</artifactId> -->
+		<!--             <version>2.4.2-geoserver</version> -->
+		<!--         </dependency> -->
+
+		<!-- dubbo结合springboot -->
+		<dependency>
+			<groupId>org.apache.dubbo</groupId>
+			<artifactId>dubbo-spring-boot-starter</artifactId>
+			<version>2.7.8</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.zookeeper</groupId>
+			<artifactId>zookeeper</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.slf4j</groupId>
+					<artifactId>slf4j-log4j12</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.curator</groupId>
+			<artifactId>curator-framework</artifactId>
+			<version>5.1.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.curator</groupId>
+			<artifactId>curator-recipes</artifactId>
+			<version>5.1.0</version>
+		</dependency>
+
+		<!-- 增加sld的渲染 -->
+		<dependency>
+			<groupId>org.geotools.xsd</groupId>
+			<artifactId>gt-xsd-sld</artifactId>
+			<version>23.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.geoserver</groupId>
+			<artifactId>gs-platform</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.geoserver</groupId>
+			<artifactId>gs-main</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework.security</groupId>
+					<artifactId>spring-security-web</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.springframework.security</groupId>
+					<artifactId>spring-security-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.springframework.security</groupId>
+					<artifactId>spring-security-config</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.jasypt</groupId>
+					<artifactId>jasypt</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.geoserver</groupId>
+			<artifactId>gs-wcs</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.geoserver</groupId>
+			<artifactId>gs-wcs1_0</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.geoserver</groupId>
+			<artifactId>gs-wcs1_1</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.geoserver</groupId>
+			<artifactId>gs-wcs2_0</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.geoserver</groupId>
+			<artifactId>gs-wfs</artifactId>
+		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.geoserver</groupId>-->
+<!--			<artifactId>gs-wms</artifactId>-->
+<!--		</dependency>-->
+		<dependency>
+			<groupId>org.geoserver</groupId>
+			<artifactId>gs-ows</artifactId>
+		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.geoserver</groupId>-->
+<!--			<artifactId>gt-vbffile</artifactId>-->
+<!--		</dependency>-->
+		<dependency>
+			<groupId>org.geoserver</groupId>
+			<artifactId>gs-kml</artifactId>
+		</dependency>
+		<!-- geosever的依赖包结束 -->
+
+		<!-- swagger依赖包 -->
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+		</dependency>
+
+		<!-- 分词工具 -->
+		<dependency>
+			<groupId>com.janeluo</groupId>
+			<artifactId>ikanalyzer</artifactId>
+			<version>2012_u6</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>3.18.1</version>
+<!--			<scope>3.18.1</scope>-->
+		</dependency>
+
+
+
+		<!-- 解析kml的工具 -->
+		<!--       <dependency> -->
+		<!--                <groupId>de.micromata.jak</groupId> -->
+		<!--                <artifactId>JavaAPIforKml</artifactId> -->
+		<!--                <version>2.2.1</version> -->
+		<!--                <scope>test</scope> -->
+		<!--            </dependency> -->
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-kml</artifactId>
+			<version>25.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-swing</artifactId>
+			<version>25.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.geowebcache</groupId>
+			<artifactId>gwc-core</artifactId>
+		</dependency>
+
+
+
+
+		<!-- License -->
+		<dependency>
+			<groupId>de.schlichtherle.truelicense</groupId>
+			<artifactId>truelicense-core</artifactId>
+			<version>1.33</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sourceforge.nekohtml</groupId>
+			<artifactId>nekohtml</artifactId>
+			<version>1.9.22</version>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<defaultGoal>compile</defaultGoal>
+		<finalName>pygisserver</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>2.2.8.RELEASE</version>
+				<configuration>
+					<fork>true</fork>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

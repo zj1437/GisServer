@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.common.mapper.MapServerDataMapper">
+    
+      <select id="queryLayerNames" resultType="String">
+      	 SELECT 
+	        msi.server_name
+	    FROM map_server_info msi
+        where msi.pulished_proctol ~* #{serviceName}
+        AND msi.server_status != 0
+        AND msi.server_show = 0
+        AND (msi.is_public = 1
+        <if test="token != null and token != ''">
+            OR msi.server_token = #{token}
+        </if>
+        )
+      </select>
+      
+      <select id="queryServerProtocol" resultType="serverProtocolInfo">
+      	 SELECT 
+            protocol_id as protocolId,
+            protocol_name as protocolName,
+            version_list as versionList,
+            tile_grid_set as tileGridSet,
+            support_format as supportFormat
+        from server_protocol_info spi
+        where spi.protocol_name ~* #{serviceName}
+        AND spi.version_list  ~* #{version}
+      </select>
+      
+      <!-- 服务提供商 -->
+      <select id="queryServerContact" resultType="serverContact">
+         SELECT 
+            id as id,
+            title_name AS titleName,
+            abstract_name AS abstractName,
+            keywords AS keywords, 
+            online_resource AS onLineResource,
+            contact_Organization AS organization,
+         	web_site AS webSite,
+			contact_person AS contactPerson,
+			person_primary AS primary,
+			contact_telephone AS telephone,
+			contact_fax AS fax,
+			address AS address,
+			city AS city,
+			province AS province,
+			country AS country,
+			postcode AS postcode,
+			email_address AS email
+	     FROM server_provider_info
+     </select>
+     
+     <select id="queryLayerGroupInfo" parameterType="String" resultType="org.pygisserver.common.ui.entity.LayerGroup">
+         SELECT 
+             layer_group_info.group_id as LayerGroupId,
+             layer_group_info.layer_Name as layerName,
+             layer_group_info.style_name as styleName,
+             layer_group_info.min_level as minLevel,
+             layer_group_info.max_level as maxlevel
+        from layer_group_info,
+        map_server_info
+        where map_server_info.server_id = layer_group_info.group_id
+        and map_server_info.layer_name = #{layerName}
+     </select>
+     
+     <select id="queryLayerStatus" parameterType="String" resultType="int">
+         SELECT server_status
+        from map_server_info where map_server_info.layer_name = #{layerName}
+     </select>
+     
+     <select id="queryMapPyramidInfo" resultType="mapPyramidInfo" parameterType="String">
+         select 
+         id as id,
+         map_pyramid_info.server_id as serverId,
+         reolution as resolution,
+         map_pyramid_info.file_url as fileUrl
+         from 
+         map_pyramid_info,map_server_info
+         where map_server_info.server_id = map_pyramid_info.server_id
+         and map_server_info.layer_name = #{layerName}
+     </select>
+     
+     <select id="queryStyleInfoByName" resultType="pYStyleInfo" parameterType="String">
+         select 
+         style_id as styleId,
+         file_name as fileName,
+         style_name as sldName,
+         type_id as typeId
+         from
+         style_info
+         where (style_name = #{styleName}
+         or style_id = #{styleName})
+     </select>
+     
+     <select id="queryLayerInfo" resultType="layerBaseInfo" parameterType="String">
+     	select 
+	     	map_feature_info.resource_crs as resourceSrs,
+	     	map_feature_info.tile_extension as resourceFormat,
+	     	map_feature_info.tile_width as tileWidth,
+	     	map_feature_info.tile_height as tileHeight,
+	     	map_server_info.file_url as filePath,
+	     	map_server_info.file_type as fileType,
+	     	map_server_info.data_type as dataType,
+	     	map_feature_info.zoom_level as supportMaxLevel,
+	     	map_server_info.server_status as status,
+	     	map_server_info.pulished_proctol as supportProtocal,
+	     	map_feature_info.resource_bbox as resourceBbox,
+	     	map_feature_info.tile_origin_flag as origin,
+	     	map_feature_info.sea_chart_identifier as seaChartIdentifier
+	     	from 
+	     	map_feature_info
+	     	left join map_server_info
+	     	on map_server_info.server_id = map_feature_info.server_id
+     	where map_server_info.server_name = #{serverName}
+     </select>
+     
+     <insert id="saveSystemLog" parameterType="systemLogEntity">
+        INSERT INTO system_log(log_id,sys_log_level,sys_log_content,sys_log_src,sys_log_user,sys_log_src_ip,sys_log_time)
+        values(DEFAULT,#{logLevel},#{logContent},#{logSrc},#{sysLogUser},#{logSrcIP},#{logHappenedTime})
+    </insert>
+
+    <select id="queryLayerInfos" parameterType="Map" resultType="layerBaseInfo" >
+        SELECT
+        msi.server_name as layerName,
+        msi.file_type as fileType,
+        msi.description as description,
+        msi.is_layer_group as isLayerGroup,
+        mfi.resource_crs as resourceSrs,
+        mfi.native_crs as nativeSrs,
+        mfi.resource_bbox as resourceBbox,
+        mfi.native_bbox as nativaBbox,
+        si.style_name as styleName
+        FROM map_server_info msi
+        left join map_feature_info mfi
+        on msi.server_id = mfi.server_id
+        left join server_style_info ssi
+        on msi.server_id=ssi.server_id
+        left join style_info si
+        on ssi.style_id = si.id
+        where msi.pulished_proctol ~* #{serviceName}
+        AND msi.server_status != 0
+        AND msi.server_show = 0
+        AND (msi.is_public = 1
+        <if test="token != null and token != ''">
+            OR msi.server_token = #{token}
+        </if>
+        )
+    </select>
+</mapper>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.BaseCalculateMapper">
+
+
+    <select id="projection" parameterType="java.lang.String" resultType="java.lang.String">
+
+       SELECT (st_distance(
+            st_transform(st_geomfromtext(#{startPoint},${srid}),${formSrid}),
+            <choose>
+                <when test="formSrid == 3857">
+                    st_transform(st_geomfromtext((#{endPoint},${srid}),${formSrid})))/1000)as resource
+                </when>
+                <otherwise>
+                    st_transform(st_geomfromtext(#{endPoint},${srid}),${formSrid})))as resource
+                </otherwise>
+            </choose>
+
+    </select>
+
+
+    <select id="projectionBak" parameterType="java.lang.String" resultType="java.lang.String">
+
+        SELECT (st_distance(
+        st_transform(st_geomfromtext(#{startPoint},${srid}),${formSrid}),
+        <if test="formSrid !=null and formSrid == 3857">
+            st_transform(st_geomfromtext((#{endPoint},${srid}),${formSrid}))/1000)as resource
+        </if>
+        <if test="formSrid !=null and formSrid == 4326">
+            st_transform(st_geomfromtext(#{endPoint},${srid}),${formSrid}))as resource
+        </if>
+
+    </select>
+
+
+</mapper>

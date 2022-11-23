@@ -1,0 +1,1 @@
+INSERT INTO style_info(id,style_id,style_name,file_name,url,type_id,is_color,upload_time,upload_person) VALUES(DEFAULT,'StyleInfoImpl--570ae188:124761b8d78:-7ff11','等高线','等高线.sld','/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=30&HEIGHT=30&STRICT=false&style=等高线&TRANSPARENT=true',2,0,now(),'admin');

@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.ToolsServerMapper">
+
+    <update id="createPostGisTable" >
+        CREATE TABLE "${tableName}" (
+        gid serial primary key,
+        <foreach collection="columns" index="index" item="column" open="" separator="," close="">
+            <choose>
+                <when test="index == geomIndex">
+                    "${column}" geometry('${geomType}',${srs})
+                </when>
+                <otherwise>
+                    "${column}" character varying(254)
+                </otherwise>
+            </choose>
+        </foreach>
+        )
+    </update>
+
+    <insert id="insertPostGisTable" useGeneratedKeys="true" >
+        INSERT INTO "${tableName}" (gid ,
+        <foreach collection="columns" index="index" item="column" open="" separator="," close="">
+            "${column}"
+        </foreach>
+        )
+        VALUES
+        <foreach collection="valuesList" index="listIndex" item="valueArray" separator="," open="" close="">
+            (DEFAULT ,
+            <foreach collection="valueArray" index="index" item="value" open="" separator="," close="">
+                <choose>
+                    <when test="index == geomIndex">
+                        ST_SETSRID(ST_ASTEXT('${value}'),${srs})
+                    </when>
+                    <otherwise>
+                        #{value}
+                    </otherwise>
+                </choose>
+            </foreach>)
+        </foreach>
+    </insert>
+
+    <select id="getValuesFromTableName" resultType="java.util.Map" parameterType="String">
+        SELECT
+        <foreach collection="columns" index="index" item="column" open="" separator="," close="">
+            <choose>
+                <when test="index == geomIndex">
+                    <choose>
+                        <when test="filters != null and (filters == 'MULTILINESTRING' or filters == 'MULTIPOLYGON')">
+                            ST_ASTEXT(
+                            ST_transform(
+                            ST_INTERSECTION(
+                            ST_BUFFER(${column},-0.00),st_geomfromtext('POLYGON((-180 85,180 85,180 -85,-180 -85,-180 85))',4326)
+                            ),${srsName})
+                            ) AS ${column}
+                        </when>
+                        <otherwise>
+                            ST_ASTEXT(ST_transform(${column},${srsName})) AS ${column}
+                        </otherwise>
+                    </choose>
+                </when>
+                <otherwise>
+                    "${column}"
+                </otherwise>
+            </choose>
+        </foreach>
+        FROM "${tableName}" WHERE 1 = 1
+        <if test="filters != null and filters == 'POINT'">
+            AND ${primaryKey} NOT IN ( SELECT "${primaryKey}" FROM "${tableName}" WHERE st_y(${geom}) NOT BETWEEN -85 AND 85 )
+        </if>
+
+    </select>
+
+    <select id="getNoSrsValuesFromTableName" resultType="java.util.Map" parameterType="String">
+        SELECT
+        <foreach collection="columns" index="index" item="column" open="" separator="," close="">
+            <choose>
+                <when test="index == geomIndex">
+                    <choose>
+                        <when test="filters != null and (filters == 'MULTILINESTRING' or filters == 'MULTIPOLYGON')">
+                            ST_ASTEXT(
+                            ST_transform(
+                            ST_INTERSECTION(
+                            ST_BUFFER(${column},-0.00),st_geomfromtext('POLYGON((-180 85,180 85,180 -85,-180 -85,-180 85))',4326)
+                            ),${srsName})
+                            ) AS ${column}
+                        </when>
+                        <otherwise>
+                            ST_ASTEXT(ST_transform(ST_SETSRID(${column},4326),${srsName})) AS ${column}
+                        </otherwise>
+                    </choose>
+                </when>
+                <otherwise>
+                    "${column}"
+                </otherwise>
+            </choose>
+        </foreach>
+        FROM "${tableName}" WHERE 1 = 1
+        <if test="filters != null and filters == 'POINT'">
+            AND ${primaryKey} NOT IN ( SELECT "${primaryKey}" FROM "${tableName}" WHERE st_y(${geom}) NOT BETWEEN -85 AND 85 )
+        </if>
+    </select>
+
+    <select id="getValuesFromTableByCondition" resultType="java.util.Map" parameterType="String">
+        SELECT
+        <foreach collection="columns" index="index" item="column" open="" separator="," close="">
+            <choose>
+                <when test="index == geomIndex">
+                    <choose>
+                        <when test="filters != null and (filters == 'MULTILINESTRING' or filters == 'MULTIPOLYGON')">
+                            ST_ASTEXT(
+                            ST_transform(
+                            ST_INTERSECTION(
+                            ST_BUFFER(${column},-0.00),st_geomfromtext('POLYGON((-180 85,180 85,180 -85,-180 -85,-180 85))',4326)
+                            ),${srsName})
+                            ) AS ${column}
+                        </when>
+                        <otherwise>
+                            ST_ASTEXT(ST_transform(${column},${srsName})) AS ${column}
+                        </otherwise>
+                    </choose>
+                </when>
+                <otherwise>
+                    "${column}"
+                </otherwise>
+            </choose>
+        </foreach>
+        FROM "${tableName}" WHERE
+        <if test="filters != null and filters == 'POINT'">
+            ${primaryKey} NOT IN ( SELECT "${primaryKey}" FROM "${tableName}" WHERE st_y(${geom}) NOT BETWEEN -85 AND 85 ) AND
+        </if>
+        ${primaryKey} BETWEEN ${start} AND ${end} order by ${primaryKey} asc
+
+    </select>
+
+    <select id="getNoSrsValuesFromTableByCondition" resultType="java.util.Map" parameterType="String">
+        SELECT
+        <foreach collection="columns" index="index" item="column" open="" separator="," close="">
+            <choose>
+                <when test="index == geomIndex">
+                    <choose>
+                        <when test="filters != null and (filters == 'MULTILINESTRING' or filters == 'MULTIPOLYGON')">
+                            ST_ASTEXT(
+                            ST_transform(
+                            ST_INTERSECTION(
+                            ST_BUFFER(${column},-0.00),st_geomfromtext('POLYGON((-180 85,180 85,180 -85,-180 -85,-180 85))',4326)
+                            ),${srsName})
+                            ) AS ${column}
+                        </when>
+                        <otherwise>
+                            ST_ASTEXT(ST_transform(ST_SETSRID(${column},4326),${srsName})) AS ${column}
+                        </otherwise>
+                    </choose>
+                </when>
+                <otherwise>
+                    "${column}"
+                </otherwise>
+            </choose>
+        </foreach>
+        FROM "${tableName}" WHERE
+        <if test="filters != null and filters == 'POINT'">
+            ${primaryKey} NOT IN ( SELECT "${primaryKey}" FROM "${tableName}" WHERE st_y(${geom}) NOT BETWEEN -85 AND 85 ) AND
+        </if>
+        ${primaryKey} BETWEEN ${start} AND ${end} order by ${primaryKey} asc
+
+    </select>
+
+    <select id="getColumnsFromTableName" resultType="String">
+        SELECT column_name FROM information_schema.columns WHERE table_name = '${tableName}'
+    </select>
+
+    <select id="getPostGisGeomType" resultType="String">
+        SELECT TYPE FROM geometry_columns WHERE F_TABLE_SCHEMA = 'public' AND F_TABLE_NAME = #{tableName} AND f_geometry_column = #{geomName}
+    </select>
+
+    <select id="queryExportShpList" resultType="Map">
+        SELECT F_TABLE_NAME AS table,F_GEOMETRY_COLUMN,TYPE,SRID AS proj FROM geometry_columns WHERE F_TABLE_SCHEMA = 'public'
+    </select>
+
+    <select id="getGeomName" parameterType="String" resultType="String">
+        SELECT f_geometry_column FROM geometry_columns WHERE F_TABLE_SCHEMA = 'public' AND F_TABLE_NAME = #{tableName}
+    </select>
+
+    <select id="getResourceSrid"  resultType="String">
+        SELECT SRID FROM GEOMETRY_COLUMNS WHERE F_TABLE_SCHEMA = 'public' AND F_TABLE_NAME = #{tableName} AND F_GEOMETRY_COLUMN = #{geomName}
+    </select>
+
+    <select id="existTable" parameterType="String" resultType="Integer">
+        SELECT count(1) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name= #{tableName}
+    </select>
+
+
+    <select id="getGeomType" parameterType="String" resultType="String">
+        SELECT ST_ASTEXT(#{geomText})
+    </select>
+
+    <update id="dropTable">
+        DROP TABLE IF EXISTS ${tableName}
+    </update>
+
+    <select id="queryTableCount" parameterType="String" resultType="int">
+        SELECT COUNT(${primaryKey}) FROM "${tableName}"
+    </select>
+
+    <select id="getFilterPoint" parameterType="String" resultType="int">
+        SELECT "${primaryKey}" FROM "${tableName}" WHERE st_y(${geom}) NOT BETWEEN -85 AND 85
+    </select>
+
+</mapper>

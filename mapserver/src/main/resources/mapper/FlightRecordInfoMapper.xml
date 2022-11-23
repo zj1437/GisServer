@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.pygisserver.web.dao.FlightRecordInfoMapper">
+     <!-- 批量插入全球航班信息 -->
+     <insert id="saveAllFlightRecordInfos" parameterType="list" useGeneratedKeys="true" keyProperty="id">
+     	 INSERT INTO flight_record_info_world
+         (id,flight_number,latitude,longitude,geom,flight_timestamp,flying_height,
+         flight_model,no_use_data,azimuth,managerment_type,register_number,starting_place,
+         destination_place,airline_belongs,other_info) VALUES
+         <foreach collection="list" item="record" separator=",">
+          (DEFAULT,#{record.flightNumber},#{record.latitude},#{record.longitude},
+          st_geometryfromtext(#{record.pointInfo}),
+          #{record.flightTimestamp},#{record.flyingHeight},#{record.flightModel},
+          #{record.noUseData},#{record.azimuth},#{record.managermentType},
+          #{record.registerNumber},#{record.startingPlace},#{record.destinationPlace},
+          #{record.airlineBelongs},#{record.otherInfo})
+         </foreach>
+     </insert>
+     
+     <select id="queryDatasByTimestamp" parameterType="Date" resultMap="recordInfo"> 
+        SELECT
+	        r.id, 
+	        r.flight_number, 
+	        r.latitude, 
+	        r.longitude,
+	        (select st_astext(r.geom)) as geom, 
+	        r.flight_timestamp, 
+	        r.flying_height, 
+	        r.flight_model, 
+	        r.no_use_data,
+	        r.azimuth,
+	        r.managerment_type,
+	        r.register_number,
+	        r.starting_place,
+	        r.destination_place,
+	        r.airline_belongs,
+	        r.other_info
+	    FROM flight_record_info_world r
+	    where r.flight_timestamp between #{startTime} and #{endTime}
+    </select>
+    
+    <select id="queryDatasByBbox" parameterType="String" resultMap="recordInfo"> 
+        SELECT
+	        r.id, 
+	        r.flight_number, 
+	        r.latitude, 
+	        r.longitude,
+	        (select st_astext(r.geom)) as geom, 
+	        r.flight_timestamp, 
+	        r.flying_height, 
+	        r.flight_model, 
+	        r.no_use_data,
+	        r.azimuth,
+	        r.managerment_type,
+	        r.register_number,
+	        r.starting_place,
+	        r.destination_place,
+	        r.airline_belongs,
+	        r.other_info
+	    FROM flight_record_info_world r
+	    where st_contains(st_makepolygon(st_geomfromtext(#{bboxInfo})),geom)
+    </select>
+    
+    <select id="queryDatasByBboxAndTimestamp" resultMap="recordInfo"> 
+        SELECT
+	        r.id, 
+	        r.flight_number, 
+	        r.latitude, 
+	        r.longitude,
+	        (select st_astext(r.geom)) as geom, 
+	        r.flight_timestamp, 
+	        r.flying_height, 
+	        r.flight_model, 
+	        r.no_use_data,
+	        r.azimuth,
+	        r.managerment_type,
+	        r.register_number,
+	        r.starting_place,
+	        r.destination_place,
+	        r.airline_belongs,
+	        r.other_info
+	    FROM flight_record_info_world r
+	    where st_contains(st_makepolygon(st_geomfromtext(#{bboxInfo})),geom) and r.flight_timestamp = #{date}
+    </select>
+    
+    <select id="queryDatasByFlightNum" parameterType="String" resultMap="recordInfo"> 
+        SELECT
+	        r.id, 
+	        r.flight_number, 
+	        r.latitude, 
+	        r.longitude,
+	        (select st_astext(r.geom)) as geom, 
+	        r.flight_timestamp, 
+	        r.flying_height, 
+	        r.flight_model, 
+	        r.no_use_data,
+	        r.azimuth,
+	        r.managerment_type,
+	        r.register_number,
+	        r.starting_place,
+	        r.destination_place,
+	        r.airline_belongs,
+	        r.other_info
+	    FROM flight_record_info_world r
+	    where r.flight_number = #{flightNum}
+    </select>
+    
+    <resultMap type = "flightRecordInfo" id = "recordInfo">
+        <id column = "id" property="id"/>
+        <result column = "flight_number" property="flightNumber"/>
+        <result column = "latitude" property="latitude"/>
+        <result column = "longitude" property="longitude"/>
+        <result column = "geom" property="pointInfo"/>
+        <result column = "flight_timestamp" property="flightTimestamp"/>
+        <result column = "flying_height" property="flyingHeight"/>
+        <result column = "flight_model" property="flightModel"/>
+        <result column = "no_use_data" property="noUseData"/>
+        <result column = "azimuth" property="azimuth"/>
+        <result column = "managerment_type" property="managermentType"/>
+        <result column = "register_number" property="registerNumber"/>
+        <result column = "starting_place" property="startingPlace"/>
+        <result column = "destination_place" property="destinationPlace"/>
+        <result column = "airline_belongs" property="airlineBelongs"/>
+        <result column = "other_info" property="otherInfo"/>
+    </resultMap>
+</mapper>

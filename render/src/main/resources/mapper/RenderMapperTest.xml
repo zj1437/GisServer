@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.pygisserver.render.mapper.RenderMapperTest">
+     <select id="queryLayerGroupsByServerName" resultType="org.pygisserver.common.ui.entity.LayerGroup" parameterType="String">
+        select 
+        group_id as LayerGroupId,
+        layer_group_info.layer_Name as layerName,
+        style_name as styleName,
+        remote_url as remoteUrl,
+        server_type as serverType,
+        ogc_protocal as ogcProtocal,
+        min_level as minLevel,
+        max_level as maxlevel 
+        from 
+        layer_group_info,
+        map_server_info
+        where map_server_info.server_id = layer_group_info.group_id
+        and map_server_info.layer_name = #{layerName}
+        order by id
+    </select>
+    
+      <select id="querySysStylePath" resultType="String">
+         select style_path from system_config_info
+     </select>
+	
+</mapper>
+

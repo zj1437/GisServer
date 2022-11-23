@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/util
+		http://www.springframework.org/schema/util/spring-util.xsd"
+	default-lazy-init="true">
+	
+	<!-- Realm实现 -->
+    <bean id="myRealm" class="org.pygisserver.web.shiro.CustomRealm">
+        <property name="credentialsMatcher" ref="credentialsMatcher" />
+    </bean>
+    
+    <!-- 定义凭证匹配器 -->
+    <bean id="credentialsMatcher" class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+      <property name="hashAlgorithmName" value="md5"></property>
+      <property name="hashIterations" value="2"></property>
+   </bean>
+   
+    <bean id="sessionDAO" class="org.pygisserver.web.shiro.RedisSessionDao">
+    </bean>
+    
+    <!-- 会话管理器 -->
+    <bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+    	<!-- 删除失效session -->
+        <property name="deleteInvalidSessions" value="true"/>
+        <!-- 全局失效时间 -->
+<!--         <property name="globalSessionTimeout" value="1800000"/> -->
+        <!-- 开启session验证 -->
+        <property name="sessionValidationSchedulerEnabled" value="true"/>
+        <!-- session缓存 -->
+        <property name="sessionDAO" ref="sessionDAO"/>
+    </bean>
+
+    
+    
+    <!-- 安全管理器 -->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="myRealm"/>
+        <property name="sessionManager" ref="sessionManager"/>
+        <property name="rememberMeManager" ref="rememberMeManager" />
+       
+    </bean>
+    
+    <!-- Shiro的Web过滤器 -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager"/>
+        <property name="loginUrl" value="/index.html" />
+      <!--    <property name="successUrl" value="/sucess.html" /> -->
+       <!--   <property name="unauthorizedUrl" value="/404.html" />-->
+<!--         <property name="filters"> -->
+<!--             <map> -->
+<!--                <entry key="authc" value-ref="loginfilter"></entry> -->
+<!--             </map> -->
+<!--         </property> -->
+        <property name="filterChainDefinitions" >
+             <value>
+                /wcs/** = anon
+                /ows/** = anon
+                /wms/** = anon
+                /rest/** = anon
+                /wfs/** = anon
+                /pytc/service/** = anon
+                /model/** = anon
+                /dataServer/queryServerData/** = anon
+                /dataServer/queryServerUrl/** = anon
+                /tilecache/queryGirdSet/** = anon
+                /web/statistic/** = anon
+                /queryProvince/** = anon
+                /querycityinfo/**= anon
+                /user/lockUser/** = anon
+                /dataServer/cacheInfo/** = anon
+                /poi/query/** = anon
+                /static/** = anon
+                /webjars/** = anon
+                /config/** = anon
+                /data/** = anon
+                /swagger-ui.html = anon
+                /swagger-resources/** = anon
+                /v2/** = anon
+                /logout = anon
+                /dologin = anon
+                /basecalculate/** = anon
+                /client/** = anon
+                /sessionStatus = anon
+                /query/system/user = anon
+                /query/fileserver/path = anon
+                /save/init/** = anon
+                /check/path/** = anon
+                /dataServer/server/** = anon
+                /dataServer/layer/dem = anon
+                /mapserver/websocket/** = anon
+                /posture/websocket/** = anon
+                /posture/query/** = anon
+                /dataServer/notice/tile/** = anon
+                /dataServer/publishServerData/** = anon
+                /dataServer/exgroup/** = anon
+				/flightInfo/** = anon
+				/resources/** = anon
+				/updateUsernameAndPass = anon
+				/updateUserPass = anon
+				/syncSysLog = anon
+                /data/**  = anon
+                /netanalysis/** = anon
+                /analysis/** = anon
+                /dataServer/queryServerProtocolInfo/** = anon
+                /queryFunctionPage/** = anon
+                /netanalysis/** = anon
+                /symbol/** = anon
+                /collaborative/** = anon
+                /dataServer/ogcProtocol/** = anon
+                 /license/** = anon
+                 /licenseServer/** = anon
+                 /activation.html = anon
+                 /activation = anon
+                /** = user
+             </value>
+        </property>
+    </bean>
+    
+    <bean id="rememberMeManager" class="org.apache.shiro.web.mgt.CookieRememberMeManager">
+        <property name="cookie" ref="rememberMeCookie" />
+        <property name="cipherKey" value="#{T(org.apache.shiro.codec.Base64).decode('6ZmI6I2j5Y+R5aSn5ZOlAA==')}"/>
+    </bean>
+    
+	<!--记住我cookie -->
+    <bean id="rememberMeCookie" class="org.apache.shiro.web.servlet.SimpleCookie">
+      <constructor-arg value="rememberMe" />
+      <property name="name" value="pygisserver.sessionId"></property>
+      <property name="httpOnly" value="true"/>
+      <property name="maxAge" value="604800" />
+    </bean>
+
+    <!-- Shiro生命周期处理器-->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor"/>
+</beans>  
