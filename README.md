@@ -162,13 +162,6 @@ java -jar tileserver/target/pytc.jar
 
 完整接口文档：启动服务后访问 Swagger UI `/swagger-ui.html`。
 
-## 项目截图
-
-<!-- TODO: 替换为实际截图 -->
-| 管理后台首页 | 服务发布 | 瓦片缓存任务 |
-|---|---|---|
-| ![home](docs/images/home.png) | ![publish](docs/images/publish.png) | ![tile](docs/images/tile.png) |
-
 ## 技术亮点
 
 - **自研 WMS 实现**：未直接使用 GeoServer WMS 模块，基于 GeoTools 渲染管线自实现 WMS 协议解析与出图，支持 SLD 样式热更新
